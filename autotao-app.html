@@ -1,0 +1,2767 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="AutoTAO">
+<meta name="mobile-web-app-capable" content="yes">
+<title>AutoTAO · HUSA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --navy:   #1A4F8A;
+  --navy2:  #1E5FA0;
+  --blue:   #2472B8;
+  --blue2:  #3A8FD4;
+  --light:  #EBF3FB;
+  --white:  #FFFFFF;
+  --gray50: #F8FAFC;
+  --gray100:#F0F4F8;
+  --gray200:#E2EAF2;
+  --gray400:#94A7BB;
+  --gray500:#6B7E93;
+  --gray700:#374151;
+  --green:  #16A34A;
+  --greenl: #DCFCE7;
+  --amber:  #D97706;
+  --amberl: #FEF3C7;
+  --red:    #DC2626;
+  --redl:   #FEE2E2;
+  --orange: #EA580C;
+  --orangel:#FFEDD5;
+  --radius: 16px;
+  --shadow: 0 4px 24px rgba(26,79,138,0.13);
+  --shadow-sm: 0 2px 8px rgba(26,79,138,0.10);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  font-family: 'Nunito', sans-serif;
+  background: var(--gray100);
+  color: var(--gray700);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  overflow: hidden;
+}
+/* ── App shell ── */
+#app {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  max-width: 430px; margin: 0 auto;
+  background: var(--white);
+  box-shadow: 0 0 60px rgba(0,0,0,0.15);
+}
+.screen {
+  display: none; flex-direction: column;
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+.screen.active { display: flex; }
+
+/* ── Nurse call button (fixed, all screens) ── */
+#btnNurse {
+  position: fixed; top: 10px; right: 14px; z-index: 9000;
+  background: var(--navy); color: #fff;
+  border: none; border-radius: 50px;
+  padding: 7px 13px 7px 10px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; gap: 5px;
+  box-shadow: 0 3px 12px rgba(26,79,138,0.35);
+  cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+}
+#btnNurse:active { transform: scale(0.95); box-shadow: 0 1px 6px rgba(26,79,138,0.3); }
+#btnNurse svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+/* ── Notification banner ── */
+#notifBanner {
+  position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+  max-width: 430px; width: 100%; z-index: 9500;
+  background: var(--navy); color: #fff;
+  padding: 14px 16px 14px 16px;
+  display: none; flex-direction: column; gap: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+#notifBanner.visible { display: flex; }
+#notifBanner .nb-title { font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+#notifBanner .nb-sub   { font-size: 13px; opacity: 0.85; line-height: 1.4; }
+#notifBanner button {
+  align-self: flex-start; background: rgba(255,255,255,0.22);
+  border: none; border-radius: 8px; color: #fff;
+  font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 13px;
+  padding: 7px 14px; cursor: pointer; margin-top: 2px;
+}
+
+/* ── SCREEN: Consent ── */
+#screenConsent {
+  background: linear-gradient(170deg, #EBF3FB 0%, #fff 60%);
+  padding: 0 0 32px;
+}
+.consent-header {
+  background: var(--navy);
+  color: #fff;
+  padding: 52px 24px 24px;
+  position: relative;
+}
+.consent-header .hosp-name {
+  font-family: 'Lora', serif;
+  font-size: 11px; font-weight: 400;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  opacity: 0.75; margin-bottom: 6px;
+}
+.consent-header h1 {
+  font-size: 22px; font-weight: 800;
+  line-height: 1.2; margin-bottom: 4px;
+}
+.consent-header .subtitle {
+  font-size: 13px; opacity: 0.8; font-weight: 500;
+}
+.consent-body { padding: 24px 20px 0; }
+.consent-section { margin-bottom: 18px; }
+.consent-section h3 {
+  font-size: 13px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--navy); margin-bottom: 6px;
+}
+.consent-section p {
+  font-size: 14px; line-height: 1.6; color: var(--gray700);
+}
+.consent-warning {
+  background: var(--amberl); border-left: 4px solid var(--amber);
+  border-radius: 0 10px 10px 0; padding: 12px 14px;
+  font-size: 13px; line-height: 1.5; color: #78350F;
+  margin-bottom: 20px;
+}
+.consent-checks { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+.consent-check-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: var(--white); border-radius: 12px;
+  padding: 12px 14px; box-shadow: var(--shadow-sm);
+  cursor: pointer; transition: background 0.15s;
+  touch-action: manipulation;
+}
+.consent-check-item:active { background: var(--light); }
+.consent-check-item input[type=checkbox] {
+  width: 20px; height: 20px; flex-shrink: 0;
+  accent-color: var(--navy); cursor: pointer; margin-top: 1px;
+  touch-action: manipulation;
+}
+.consent-check-item label {
+  font-size: 13.5px; line-height: 1.5; color: var(--gray700);
+  cursor: pointer; touch-action: manipulation;
+}
+.consent-footer-note {
+  font-size: 12px; color: var(--gray500); line-height: 1.5;
+  text-align: center; padding: 0 16px; margin-bottom: 16px;
+}
+#btnConsent {
+  width: calc(100% - 40px); margin: 0 20px;
+  background: var(--navy); color: #fff;
+  border: none; border-radius: 14px;
+  padding: 16px; font-size: 16px; font-weight: 800;
+  font-family: 'Nunito', sans-serif; cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  box-shadow: 0 4px 16px rgba(26,79,138,0.3);
+}
+#btnConsent:disabled { opacity: 0.4; }
+#btnConsent:not(:disabled):active { transform: scale(0.98); }
+
+/* ── SCREEN: Welcome ── */
+#screenWelcome {
+  background: var(--navy);
+  align-items: stretch; justify-content: flex-start;
+  cursor: pointer;
+}
+.welcome-content {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 40px 28px 36px; gap: 14px;
+}
+.welcome-logo-img {
+  width: 90px; height: 90px; object-fit: contain;
+  border-radius: 20px; margin-bottom: 4px;
+}
+.welcome-badge {
+  background: rgba(255,255,255,0.15); border-radius: 20px;
+  padding: 5px 14px; font-size: 12px; font-weight: 800;
+  color: rgba(255,255,255,0.9); letter-spacing: 0.04em;
+}
+.welcome-title {
+  font-size: 26px; font-weight: 800; color: #fff;
+  letter-spacing: -0.5px; margin: 0;
+}
+.welcome-text {
+  font-size: 14px; line-height: 1.65; color: rgba(255,255,255,0.82);
+  text-align: center; max-width: 320px;
+}
+.welcome-text strong { color: #fff; }
+.welcome-tap {
+  color: rgba(255,255,255,0.5); font-size: 12px;
+  font-weight: 600; margin-top: 8px;
+}
+.welcome-progress {
+  width: 100%; max-width: 200px; height: 3px;
+  background: rgba(255,255,255,0.15); border-radius: 2px;
+  overflow: hidden; margin-top: 4px;
+}
+.welcome-bar {
+  height: 100%; width: 0%; background: rgba(255,255,255,0.6);
+  border-radius: 2px;
+  transition: width 10s linear;
+}
+
+/* ── SCREEN: Splash ── */
+#screenSplash {
+  background: #F2F4F7;
+  align-items: stretch; justify-content: flex-start;
+  cursor: pointer; overflow: hidden;
+}
+.splash-content {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 0; padding: 24px 28px 32px;
+}
+.splash-logo-img {
+  width: 220px; height: 220px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 24px rgba(26,79,138,0.18));
+  margin-bottom: 12px;
+}
+.splash-hospital-block {
+  text-align: center; margin-bottom: 22px;
+}
+.splash-hosp-line {
+  font-family: 'Lora', serif;
+  font-size: 13px; font-weight: 700;
+  color: var(--navy); letter-spacing: 0.04em;
+  text-transform: uppercase; line-height: 1.3;
+}
+.splash-hosp-sub {
+  font-size: 12px; color: var(--gray500);
+  font-weight: 600; margin-top: 3px;
+}
+.splash-unit {
+  font-size: 11.5px; color: var(--blue);
+  font-weight: 700; margin-top: 4px;
+  font-style: italic;
+}
+.splash-disclaimer-box {
+  background: rgba(26,79,138,0.07);
+  border-radius: 12px; padding: 13px 16px;
+  font-size: 12px; line-height: 1.55;
+  color: var(--gray500); text-align: center;
+  margin-bottom: 24px;
+}
+.splash-tap-hint {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--gray400); font-size: 13px; font-weight: 700;
+  width: 100%;
+}
+.splash-tap-hint::before, .splash-tap-hint::after {
+  content: ''; flex: 1; height: 1px; background: var(--gray200);
+}
+
+/* ── SCREEN: Login ── */
+#screenLogin {
+  background: var(--navy);
+  align-items: stretch;
+  padding: 0;
+  justify-content: flex-start;
+}
+.login-top {
+  flex: 0 0 auto;
+  padding: 52px 24px 28px;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 16px; background: var(--navy);
+}
+.login-logo-mark {
+  width: 64px; height: 64px; border-radius: 18px;
+  background: rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px;
+}
+.login-top-text { text-align: center; }
+.login-top-text h2 {
+  color: #fff; font-size: 26px; font-weight: 800;
+  letter-spacing: -0.5px; line-height: 1.1;
+}
+.login-top-text p {
+  color: rgba(255,255,255,0.65); font-size: 13px;
+  font-weight: 500; margin-top: 4px;
+}
+.login-card {
+  flex: 1;
+  background: var(--white);
+  border-radius: 28px 28px 0 0;
+  box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+  padding: 28px 20px 24px;
+  display: flex; flex-direction: column; gap: 0;
+  overflow-y: auto;
+}
+.login-card-label {
+  font-size: 12px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--navy); margin-bottom: 10px;
+}
+.pin-display {
+  background: var(--light); border-radius: 14px;
+  padding: 0 16px; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+  height: 60px; border: 2px solid var(--gray200);
+  transition: border-color 0.2s;
+}
+.pin-display.has-input { border-color: var(--blue); }
+.pin-dots {
+  flex: 1; display: flex; align-items: center; gap: 10px;
+}
+.pin-dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--gray200); transition: background 0.15s, transform 0.15s;
+}
+.pin-dot.filled { background: var(--navy); transform: scale(1.1); }
+.pin-display .pin-label {
+  font-size: 11px; color: var(--gray400);
+  font-weight: 700; letter-spacing: 0; white-space: nowrap;
+}
+.numpad {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 10px; margin-bottom: 16px;
+}
+.key {
+  background: var(--gray100); border: none; border-radius: 14px;
+  padding: 0; height: 58px;
+  font-size: 22px; font-weight: 700;
+  color: var(--gray700); cursor: pointer; font-family: 'Nunito', sans-serif;
+  transition: background 0.1s, transform 0.1s;
+  touch-action: manipulation; user-select: none;
+  -webkit-user-select: none;
+  display: flex; align-items: center; justify-content: center;
+}
+.key:active, .key.pressed { background: var(--gray200); transform: scale(0.93); }
+.key.key-ok {
+  background: var(--navy); color: #fff; font-size: 15px;
+  font-weight: 800; letter-spacing: 0.03em;
+}
+.key.key-ok:active { background: var(--navy2); }
+.key.key-del { font-size: 20px; color: var(--gray500); }
+.login-back {
+  text-align: center; margin-top: 4px;
+  color: var(--gray400); font-size: 13px; font-weight: 600;
+  cursor: pointer; padding: 8px 0;
+}
+.login-test-hint {
+  text-align: center; font-size: 12px; color: var(--gray400);
+  font-weight: 600; margin-top: 2px; padding: 4px 0;
+}
+.login-test-hint strong { color: var(--navy); }
+.login-hospital-badge {
+  margin-top: auto; padding-top: 16px;
+  display: flex; align-items: center; gap: 10px;
+  border-top: 1px solid var(--gray100);
+}
+.lhb-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--light); display: flex; align-items: center;
+  justify-content: center; font-size: 18px; flex-shrink: 0;
+}
+.lhb-text { font-size: 11px; color: var(--gray400); line-height: 1.4; font-weight: 600; }
+
+/* ── Med brand selector ── */
+.med-brand-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  margin-bottom: 10px;
+}
+.med-brand-btn {
+  background: var(--white); border: 2px solid var(--gray200);
+  border-radius: 14px; padding: 14px 12px; text-align: center;
+  cursor: pointer; transition: all 0.15s;
+  touch-action: manipulation;
+}
+.med-brand-btn:active { transform: scale(0.96); }
+.med-brand-btn.selected {
+  border-color: var(--navy); background: var(--light);
+}
+.med-brand-btn .mbb-name {
+  font-size: 16px; font-weight: 800; color: var(--navy); line-height: 1.2;
+}
+.med-brand-btn .mbb-sub {
+  font-size: 11px; color: var(--gray500); font-weight: 600; margin-top: 2px;
+}
+.med-dose-options { display: flex; flex-direction: column; gap: 0; }
+.med-dose-group { display: flex; flex-direction: column; gap: 8px; }
+
+/* ── SCREEN: Profile ── */
+#screenProfile { padding: 0 0 32px; background: var(--gray50); }
+.profile-header {
+  background: var(--navy); color: #fff;
+  padding: 52px 20px 24px;
+}
+.profile-header h2 { font-size: 22px; font-weight: 800; }
+.profile-header p  { font-size: 13px; opacity: 0.75; margin-top: 4px; }
+.profile-form { padding: 20px; display: flex; flex-direction: column; gap: 18px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label {
+  font-size: 12px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--navy);
+}
+.form-group input[type=text], .form-group input[type=number], .form-group input[type=time] {
+  background: var(--white); border: 2px solid var(--gray200);
+  border-radius: 12px; padding: 13px 14px;
+  font-size: 16px; font-family: 'Nunito', sans-serif; font-weight: 600;
+  color: var(--gray700); outline: none; width: 100%;
+  transition: border-color 0.2s;
+}
+.form-group input:focus { border-color: var(--blue); }
+.radio-group { display: flex; flex-direction: column; gap: 8px; }
+.radio-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--white); border: 2px solid var(--gray200);
+  border-radius: 12px; padding: 13px 14px; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  touch-action: manipulation;
+}
+.radio-item.selected { border-color: var(--navy); background: var(--light); }
+.radio-item input[type=radio] { accent-color: var(--navy); width: 18px; height: 18px; flex-shrink: 0; }
+.radio-item .ri-text { display: flex; flex-direction: column; gap: 1px; }
+.radio-item .ri-name { font-size: 15px; font-weight: 700; color: var(--gray700); }
+.radio-item .ri-sub  { font-size: 12px; color: var(--gray500); }
+.form-hint { font-size: 12px; color: var(--gray500); line-height: 1.4; }
+#btnSaveProfile {
+  margin: 4px 0 0; background: var(--navy); color: #fff;
+  border: none; border-radius: 14px; padding: 16px;
+  font-size: 16px; font-weight: 800; font-family: 'Nunito', sans-serif;
+  cursor: pointer; box-shadow: 0 4px 16px rgba(26,79,138,0.3);
+  transition: transform 0.15s;
+}
+#btnSaveProfile:active { transform: scale(0.98); }
+
+/* ── SCREEN: Main ── */
+#screenMain { background: var(--gray50); padding-bottom: 24px; }
+.main-header {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 100%);
+  padding: 52px 20px 20px;
+  display: flex; justify-content: space-between; align-items: flex-start;
+}
+.main-header .greeting { color: #fff; }
+.main-header .greeting .time-label {
+  font-size: 12px; font-weight: 700; opacity: 0.7;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.main-header .greeting .patient-name {
+  font-size: 22px; font-weight: 800; margin-top: 2px;
+}
+.main-header .header-actions { display: flex; gap: 8px; align-items: center; }
+.header-btn {
+  background: rgba(255,255,255,0.15); border: none;
+  border-radius: 10px; padding: 8px 12px; color: #fff;
+  font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; gap: 5px;
+  touch-action: manipulation;
+}
+.header-btn:active { background: rgba(255,255,255,0.25); }
+
+.main-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+/* Dose card */
+.dose-card {
+  background: var(--white); border-radius: 20px;
+  box-shadow: var(--shadow); overflow: hidden;
+}
+.dose-card-header {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+  padding: 14px 18px; color: #fff;
+}
+.dose-card-header .dc-label {
+  font-size: 11px; font-weight: 700; opacity: 0.8;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.dose-card-header .dc-title { font-size: 17px; font-weight: 800; margin-top: 2px; }
+.dose-card-body {
+  padding: 20px; display: flex; align-items: center; gap: 20px;
+}
+.pill-container {
+  flex-shrink: 0; cursor: pointer;
+  transition: transform 0.2s; position: relative;
+}
+.pill-container:active { transform: scale(0.92); }
+.pill-confirm-badge {
+  position: absolute; top: -4px; right: -4px;
+  background: var(--green); border-radius: 50%;
+  width: 22px; height: 22px; display: none;
+  align-items: center; justify-content: center;
+  font-size: 13px; border: 2px solid #fff;
+}
+.pill-confirm-badge.visible { display: flex; }
+.dose-info { flex: 1; min-width: 0; }
+.dose-mg {
+  font-size: 28px; font-weight: 800; color: var(--navy); line-height: 1;
+}
+.dose-mg span { font-size: 16px; font-weight: 600; color: var(--gray500); }
+.dose-fraction {
+  font-size: 15px; font-weight: 800; color: var(--navy);
+  margin-top: 2px;
+}
+.dose-weekly { font-size: 13px; color: var(--gray500); margin-top: 3px; }
+.dose-status {
+  margin-top: 10px; padding: 8px 12px; border-radius: 10px;
+  font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px;
+}
+.dose-status.ok     { background: var(--greenl); color: var(--green); }
+.dose-status.pending{ background: var(--amberl); color: var(--amber); }
+.dose-status.missed { background: var(--redl);   color: var(--red); }
+
+/* Weekly schedule */
+.week-card {
+  background: var(--white); border-radius: 20px;
+  box-shadow: var(--shadow); padding: 16px 18px;
+}
+.week-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.week-card h3 {
+  font-size: 12px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--navy); margin: 0;
+}
+.week-total-badge {
+  background: var(--light); border-radius: 20px;
+  padding: 3px 10px; font-size: 12px; font-weight: 800; color: var(--navy);
+}
+.week-card-foot {
+  font-size: 11px; color: var(--gray400); text-align: center;
+  margin-top: 10px; font-weight: 600;
+}
+.week-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.week-day {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+}
+.wd-label {
+  font-size: 10px; font-weight: 700; color: var(--gray500);
+  text-transform: uppercase;
+}
+.wd-pill {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800; line-height: 1;
+}
+.wd-pill.today     { background: var(--navy); color: #fff; }
+.wd-pill.normal    { background: var(--light); color: var(--navy); }
+.wd-pill.half      { background: var(--amberl); color: var(--amber); }
+.wd-pill.zero      { background: var(--gray200); color: var(--gray400); }
+
+/* Info cards */
+.info-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.info-card {
+  background: var(--white); border-radius: 16px;
+  box-shadow: var(--shadow-sm); padding: 14px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.info-card .ic-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--gray400);
+}
+.info-card .ic-value {
+  font-size: 16px; font-weight: 800; color: var(--navy);
+}
+.info-card .ic-sub { font-size: 12px; color: var(--gray500); }
+
+/* INR banner */
+.inr-banner {
+  border-radius: 16px; padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px; cursor: pointer;
+  transition: transform 0.15s;
+}
+.inr-banner:active { transform: scale(0.98); }
+.inr-banner.due    { background: linear-gradient(135deg, #FEF3C7, #FDE68A); border: 2px solid #F59E0B; }
+.inr-banner.normal { background: var(--light); border: 2px solid var(--gray200); }
+.inr-banner .ib-icon { font-size: 24px; }
+.inr-banner .ib-text { flex: 1; }
+.inr-banner .ib-title { font-size: 15px; font-weight: 800; color: var(--gray700); }
+.inr-banner .ib-sub   { font-size: 12px; color: var(--gray500); margin-top: 2px; }
+.inr-banner .ib-arrow { font-size: 18px; color: var(--gray400); }
+
+/* ── SCREEN: INR ── */
+#screenINR { background: var(--gray50); padding-bottom: 32px; }
+.screen-header {
+  background: var(--navy); color: #fff;
+  padding: 52px 20px 20px;
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.back-btn {
+  background: rgba(255,255,255,0.15); border: none; border-radius: 10px;
+  padding: 8px 10px; color: #fff; cursor: pointer; font-size: 18px;
+  touch-action: manipulation; flex-shrink: 0; margin-top: 2px;
+}
+.screen-header .sh-title { font-size: 20px; font-weight: 800; margin-bottom: 2px; }
+.screen-header .sh-sub   { font-size: 13px; opacity: 0.75; }
+
+.inr-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.inr-input-card {
+  background: var(--white); border-radius: 20px;
+  box-shadow: var(--shadow); padding: 20px;
+}
+.inr-input-card label {
+  font-size: 12px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--navy); display: block; margin-bottom: 10px;
+}
+.inr-input-row {
+  display: flex; gap: 10px; align-items: center;
+}
+.inr-input-row input {
+  flex: 1; background: var(--gray100); border: 2px solid var(--gray200);
+  border-radius: 12px; padding: 16px; font-size: 28px; font-weight: 800;
+  color: var(--navy); text-align: center; outline: none;
+  font-family: 'Nunito', sans-serif; transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+.inr-input-row input:focus { border-color: var(--blue); background: var(--white); }
+.inr-calc-btn {
+  background: var(--navy); color: #fff; border: none; border-radius: 12px;
+  padding: 16px 20px; font-size: 15px; font-weight: 800;
+  font-family: 'Nunito', sans-serif; cursor: pointer;
+  transition: transform 0.15s;
+}
+.inr-calc-btn:active { transform: scale(0.95); }
+.inr-range-hint { font-size: 12px; color: var(--gray500); margin-top: 8px; }
+
+/* INR Result */
+.inr-result-card {
+  background: var(--white); border-radius: 20px;
+  box-shadow: var(--shadow); overflow: hidden;
+  display: none;
+}
+.inr-result-card.visible { display: block; }
+.irc-status-bar { padding: 14px 18px; color: #fff; }
+.irc-status-bar.ok      { background: var(--green); }
+.irc-status-bar.low     { background: var(--amber); }
+.irc-status-bar.high    { background: var(--orange); }
+.irc-status-bar.vlow    { background: var(--red); }
+.irc-status-bar.vhigh   { background: var(--red); }
+.irc-status-bar.critical{ background: #7F1D1D; }
+.irc-status-label { font-size: 12px; font-weight: 700; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.05em; }
+.irc-status-title { font-size: 22px; font-weight: 800; margin-top: 2px; }
+.irc-body { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.irc-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-bottom: 12px; border-bottom: 1px solid var(--gray100);
+}
+.irc-row:last-child { border-bottom: none; padding-bottom: 0; }
+.irc-row .ir-label { font-size: 13px; color: var(--gray500); font-weight: 600; }
+.irc-row .ir-value { font-size: 16px; font-weight: 800; color: var(--navy); text-align: right; }
+.irc-row .ir-value.warn  { color: var(--amber); }
+.irc-row .ir-value.alert { color: var(--red); }
+.irc-instructions {
+  background: var(--light); border-radius: 12px; padding: 14px;
+  font-size: 13.5px; line-height: 1.6; color: var(--gray700);
+}
+.irc-critical-alert {
+  background: #FEE2E2; border: 2px solid #DC2626; border-radius: 12px;
+  padding: 14px; display: flex; gap: 10px;
+}
+.irc-critical-alert .ica-icon { font-size: 24px; flex-shrink: 0; }
+.irc-critical-alert .ica-text { font-size: 13.5px; line-height: 1.5; color: #7F1D1D; font-weight: 700; }
+.irc-heparin-alert {
+  background: #FEF3C7; border: 2px solid #F59E0B; border-radius: 12px;
+  padding: 14px; display: flex; gap: 10px;
+}
+.irc-heparin-alert .ica-icon { font-size: 24px; flex-shrink: 0; }
+.irc-heparin-alert .ica-text { font-size: 13.5px; line-height: 1.5; color: #78350F; font-weight: 700; }
+
+/* INR result new schedule preview */
+.irc-new-schedule {
+  background: var(--light); border-radius: 12px; padding: 12px 14px;
+}
+.ins-label {
+  font-size: 12px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--navy); margin-bottom: 10px;
+}
+.ins-days {
+  gap: 4px;
+}
+.ins-days .wd-pill {
+  width: 32px; height: 32px; font-size: 10px;
+}
+
+/* INR Reference table */
+.inr-ref-table {
+  background: var(--white); border-radius: 16px;
+  box-shadow: var(--shadow-sm); overflow: hidden;
+}
+.irt-header {
+  padding: 13px 16px; display: flex; justify-content: space-between;
+  align-items: center; cursor: pointer; font-size: 13px;
+  font-weight: 800; color: var(--navy);
+  touch-action: manipulation;
+}
+.irt-header:active { background: var(--light); }
+.irt-body { padding: 0 12px 12px; overflow-x: auto; }
+.irt-table {
+  width: 100%; border-collapse: collapse; font-size: 11px;
+  font-family: 'Nunito', sans-serif;
+}
+.irt-table th {
+  background: var(--navy); color: #fff; padding: 6px 7px;
+  text-align: left; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.irt-table td {
+  padding: 6px 7px; border-bottom: 1px solid var(--gray100);
+  vertical-align: middle; white-space: nowrap;
+}
+.irt-table tr:last-child td { border-bottom: none; }
+.irt-badge {
+  display: inline-block; border-radius: 6px; padding: 2px 7px;
+  font-size: 10px; font-weight: 800; white-space: nowrap;
+}
+.irt-ok     { background:var(--greenl); color:var(--green); }
+.irt-low    { background:var(--amberl); color:var(--amber); }
+.irt-vlow   { background:var(--redl);   color:var(--red);   }
+.irt-high   { background:var(--orangel);color:var(--orange);}
+.irt-vhigh  { background:var(--redl);   color:var(--red);   }
+.irt-crit   { background:#7F1D1D;       color:#fff;         }
+
+/* Observations */
+.obs-card {
+  background: var(--white); border-radius: 20px;
+  box-shadow: var(--shadow); padding: 18px;
+}
+.obs-card label {
+  font-size: 12px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--navy); display: block; margin-bottom: 10px;
+}
+.obs-card textarea {
+  width: 100%; background: var(--gray100); border: 2px solid var(--gray200);
+  border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.5;
+  font-family: 'Nunito', sans-serif; color: var(--gray700);
+  resize: none; outline: none; min-height: 90px; transition: border-color 0.2s;
+}
+.obs-card textarea:focus { border-color: var(--blue); }
+
+/* Alarm signs card */
+.alarm-signs-card {
+  background: #FFF7ED; border: 1.5px solid #FED7AA;
+  border-radius: 16px; padding: 14px 16px;
+}
+.asc-title {
+  font-size: 13px; font-weight: 800; color: #9A3412; margin-bottom: 10px;
+}
+.asc-list {
+  padding-left: 16px; display: flex; flex-direction: column; gap: 5px;
+  margin-bottom: 10px;
+}
+.asc-list li { font-size: 12.5px; color: #7C2D12; line-height: 1.4; }
+.asc-emergency {
+  font-size: 12px; font-weight: 700; color: #9A3412;
+  background: #FED7AA; border-radius: 8px; padding: 6px 10px;
+  text-align: center;
+}
+
+/* Action buttons */
+.action-row { display: flex; flex-direction: column; gap: 10px; }
+.btn-primary {
+  background: var(--navy); color: #fff; border: none; border-radius: 14px;
+  padding: 15px; font-size: 15px; font-weight: 800;
+  font-family: 'Nunito', sans-serif; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: transform 0.15s; box-shadow: 0 4px 14px rgba(26,79,138,0.25);
+}
+.btn-primary:active { transform: scale(0.98); }
+.btn-secondary {
+  background: var(--light); color: var(--navy); border: 2px solid var(--gray200);
+  border-radius: 14px; padding: 13px; font-size: 14px; font-weight: 700;
+  font-family: 'Nunito', sans-serif; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: background 0.15s;
+}
+.btn-secondary:active { background: var(--gray200); }
+
+/* ── SCREEN: History ── */
+#screenHistory { background: var(--gray50); padding-bottom: 32px; }
+.history-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.chart-card {
+  background: var(--white); border-radius: 20px;
+  box-shadow: var(--shadow); padding: 18px;
+}
+.chart-card h3 {
+  font-size: 12px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--navy); margin-bottom: 4px;
+}
+.chart-legend {
+  display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;
+}
+.cl-item { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--gray500); }
+.cl-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* TTR Badge */
+.ttr-badge {
+  background: var(--white); border-radius: 16px;
+  box-shadow: var(--shadow-sm); padding: 14px 18px;
+  display: flex; align-items: center; gap: 14px;
+}
+.ttr-circle {
+  width: 54px; height: 54px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 15px; font-weight: 800;
+}
+.ttr-circle.green  { background: var(--greenl); color: var(--green); }
+.ttr-circle.amber  { background: var(--amberl); color: var(--amber); }
+.ttr-circle.red    { background: var(--redl);   color: var(--red); }
+.ttr-text .ttr-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray400); }
+.ttr-text .ttr-desc  { font-size: 14px; font-weight: 700; color: var(--gray700); margin-top: 2px; }
+
+/* History list */
+.history-list-card {
+  background: var(--white); border-radius: 20px;
+  box-shadow: var(--shadow); overflow: hidden;
+}
+.hlc-header {
+  padding: 14px 18px; border-bottom: 1px solid var(--gray100);
+  font-size: 12px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--navy);
+}
+.history-item {
+  padding: 14px 18px; display: flex; align-items: flex-start; gap: 12px;
+  border-bottom: 1px solid var(--gray100);
+}
+.history-item:last-child { border-bottom: none; }
+.hi-inr {
+  width: 46px; height: 46px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 800; flex-shrink: 0;
+}
+.hi-inr.ok     { background: var(--greenl); color: var(--green); }
+.hi-inr.low    { background: var(--amberl); color: var(--amber); }
+.hi-inr.high   { background: var(--orangel); color: var(--orange); }
+.hi-inr.vlow,
+.hi-inr.vhigh,
+.hi-inr.critical { background: var(--redl); color: var(--red); }
+.hi-info { flex: 1; min-width: 0; }
+.hi-date { font-size: 13px; font-weight: 700; color: var(--gray700); }
+.hi-dose { font-size: 12px; color: var(--gray500); margin-top: 2px; }
+.hi-obs  { font-size: 12px; color: var(--gray500); margin-top: 2px; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
+.hi-status { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
+.hi-status.ok     { background: var(--greenl); color: var(--green); }
+.hi-status.low    { background: var(--amberl); color: var(--amber); }
+.hi-status.high   { background: var(--orangel); color: var(--orange); }
+.hi-status.vlow,
+.hi-status.vhigh,
+.hi-status.critical { background: var(--redl); color: var(--red); }
+
+/* Dose log */
+.dose-log-card {
+  background: var(--white); border-radius: 20px;
+  box-shadow: var(--shadow); overflow: hidden;
+}
+.dose-log-item {
+  padding: 11px 18px; display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid var(--gray100);
+}
+.dose-log-item:last-child { border-bottom: none; }
+.dli-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.dli-icon.taken    { background: var(--greenl); }
+.dli-icon.missed   { background: var(--redl); }
+.dli-icon.norecord { background: var(--gray100); }
+.dli-date { flex: 1; font-size: 13px; font-weight: 600; color: var(--gray700); }
+.dli-dose { font-size: 12px; color: var(--gray500); }
+.dli-status { font-size: 12px; font-weight: 700; }
+.dli-status.taken    { color: var(--green); }
+.dli-status.missed   { color: var(--red); }
+.dli-status.norecord { color: var(--gray400); }
+
+/* Empty state */
+.empty-state {
+  text-align: center; padding: 32px 20px; color: var(--gray400);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.empty-state .es-icon { font-size: 36px; }
+.empty-state p { font-size: 14px; font-weight: 600; }
+
+/* Toast */
+#toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--gray700); color: #fff; border-radius: 12px;
+  padding: 12px 20px; font-size: 14px; font-weight: 700;
+  z-index: 9999; opacity: 0; pointer-events: none;
+  transition: opacity 0.3s, transform 0.3s;
+  white-space: nowrap; max-width: calc(100% - 40px);
+  text-align: center;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gray200); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<!-- Nurse call button -->
+<button id="btnNurse" onclick="callNurse()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.25 1.25 2 2 0 012.24.25h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.08 6.08l1.71-1.71a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/>
+  </svg>
+  Enfermera
+</button>
+
+<!-- Notification banner -->
+<div id="notifBanner">
+  <div class="nb-title">💊 ¡Hora de tu medicación!</div>
+  <div class="nb-sub">Toca la pastilla en la pantalla principal para confirmar la toma.<br>El aviso se repetirá cada 10 min (máx. 40 min).</div>
+  <button ontouchstart="closeNotifBanner(event)" onclick="closeNotifBanner()">Cerrar aviso</button>
+</div>
+
+<div id="app">
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 1: CONSENT
+═══════════════════════════════════════════ -->
+<div id="screenConsent" class="screen">
+  <div class="consent-header">
+    <div class="hosp-name">Hospital Universitario San Agustín · Avilés · Área Sanitaria III · SESPA</div>
+    <h1>Consentimiento Informado</h1>
+    <div class="subtitle">AutoTAO · Autocontrol de Tratamiento Anticoagulante Oral</div>
+  </div>
+  <div class="consent-body">
+    <div class="consent-section">
+      <h3>¿Qué es AutoTAO?</h3>
+      <p>AutoTAO es una herramienta de apoyo al autocontrol de su tratamiento anticoagulante oral (TAO), desarrollada por la Unidad de Trombosis, Hemostasia y Anticoagulación del H.U. San Agustín. Le ayuda a registrar sus valores de INR, consultar su dosis diaria y recibir orientación sobre ajustes de pauta, siempre bajo la supervisión de su enfermera y médico responsables.</p>
+      <br>
+      <p><strong>Esta aplicación no sustituye en ningún caso la consulta médica o de enfermería.</strong> Todas las recomendaciones son orientativas. La autoridad clínica final recae siempre en su equipo sanitario.</p>
+    </div>
+    <div class="consent-section">
+      <h3>¿Quién puede usarla?</h3>
+      <p>Exclusivamente pacientes incluidos en el <strong>Programa de Autocontrol TAO del H.U. San Agustín</strong>, con número de ficha Gota asignado y que hayan recibido formación presencial previa con su enfermera.</p>
+    </div>
+    <div class="consent-section">
+      <h3>Sus datos</h3>
+      <p>Sus datos (nombre, medicamento, INR, dosis) se guardan <strong>únicamente en su dispositivo</strong>. No se envían a ningún servidor externo. El informe PDF se envía por correo a su enfermera solo cuando usted lo solicita expresamente. Puede eliminar todos sus datos borrando los datos de navegación del dispositivo. Aplicación del Reglamento (UE) 2016/679 (RGPD).</p>
+    </div>
+    <div class="consent-warning">
+      ⚠️ <strong>Limitaciones importantes:</strong> Ante cualquier sangrado activo, hematoma inusual, mareo intenso o cefalea súbita, <strong>no consulte esta aplicación</strong>: llame a su enfermera o acuda a Urgencias. En caso de INR crítico, la app le indicará que contacte con consulta de forma inmediata.
+    </div>
+    <p style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:10px;">Declaro que:</p>
+    <div class="consent-checks">
+      <div class="consent-check-item" ontouchstart="toggleCheck(event,'c1')" onclick="toggleCheck(null,'c1')">
+        <input type="checkbox" id="c1" onchange="checkConsent()">
+        <label for="c1">He leído y comprendido la información anterior sobre AutoTAO.</label>
+      </div>
+      <div class="consent-check-item" ontouchstart="toggleCheck(event,'c2')" onclick="toggleCheck(null,'c2')">
+        <input type="checkbox" id="c2" onchange="checkConsent()">
+        <label for="c2">Entiendo que AutoTAO es una herramienta de apoyo y que no sustituye a mi equipo sanitario.</label>
+      </div>
+      <div class="consent-check-item" ontouchstart="toggleCheck(event,'c3')" onclick="toggleCheck(null,'c3')">
+        <input type="checkbox" id="c3" onchange="checkConsent()">
+        <label for="c3">Doy mi consentimiento para usar AutoTAO bajo supervisión de la Unidad de Anticoagulación del H.U. San Agustín.</label>
+      </div>
+      <div class="consent-check-item" ontouchstart="toggleCheck(event,'c4')" onclick="toggleCheck(null,'c4')">
+        <input type="checkbox" id="c4" onchange="checkConsent()">
+        <label for="c4">Autorizo el envío del informe PDF a mi enfermera cuando yo lo solicite expresamente.</label>
+      </div>
+    </div>
+    <p class="consent-footer-note">El uso de AutoTAO es voluntario. Puede dejar de usarla en cualquier momento sin que afecte a su atención sanitaria. Se recomienda firmar también el consentimiento en papel con su enfermera para su historia clínica.</p>
+    <button id="btnConsent" disabled onclick="acceptConsent()">Acepto y quiero continuar →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 0b: WELCOME (shown after each PIN login)
+═══════════════════════════════════════════ -->
+<div id="screenWelcome" class="screen" ontouchstart="welcomeTap(event)" onclick="welcomeTap()">
+  <div class="welcome-content">
+    <img src="" id="welcomeLogo" alt="AutoTAO HUSA" class="welcome-logo-img">
+    <div class="welcome-badge">⚕️ Aviso importante</div>
+    <h2 class="welcome-title">AutoTAO HUSA</h2>
+    <p class="welcome-text">AutoTAO es una herramienta de <strong>apoyo al autocontrol</strong> del tratamiento anticoagulante oral. <strong>No es un producto de diagnóstico ni de prescripción autónoma.</strong></p>
+    <p class="welcome-text">Su finalidad es ayudarle a registrar sus valores de INR, consultar su dosis diaria y recibir orientación sobre ajustes de pauta, siempre bajo la <strong>supervisión de su enfermera y médico responsables</strong>.</p>
+    <div class="welcome-tap">Toca en cualquier lugar para continuar</div>
+    <div class="welcome-progress"><div class="welcome-bar" id="welcomeBar"></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 2: SPLASH
+═══════════════════════════════════════════ -->
+<div id="screenSplash" class="screen" ontouchstart="splashTap(event)" onclick="splashTap()">
+  <div class="splash-content">
+    <img src="data:image/webp;base64,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" alt="AutoTAO HUSA" class="splash-logo-img">
+    <div class="splash-hospital-block">
+      <div class="splash-hosp-line">HOSPITAL UNIVERSITARIO SAN AGUSTÍN</div>
+      <div class="splash-hosp-sub">Avilés · Área Sanitaria III · SESPA</div>
+      <div class="splash-unit">Unidad de Trombosis, Hemostasia y Anticoagulación</div>
+    </div>
+    <div class="splash-disclaimer-box">AutoTAO HUSA es una herramienta de apoyo al autocontrol del tratamiento anticoagulante oral. No es un producto de diagnóstico ni de prescripción autónoma. Úsela siempre bajo supervisión de su enfermera y médico responsables.</div>
+    <div class="splash-tap-hint">Toca en cualquier lugar para continuar</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 3: LOGIN
+═══════════════════════════════════════════ -->
+<div id="screenLogin" class="screen">
+  <div class="login-top">
+    <div class="login-logo-mark"><img src="data:image/webp;base64,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" alt="AutoTAO" style="width:52px;height:52px;object-fit:contain;border-radius:10px;"></div>
+    <div class="login-top-text">
+      <h2>AutoTAO</h2>
+      <p>Autocontrol de Tratamiento Anticoagulante Oral</p>
+    </div>
+  </div>
+  <div class="login-card">
+    <div class="login-card-label">Nº de ficha del Programa Gota</div>
+    <div class="pin-display" id="pinDisplayBox">
+      <div class="pin-dots" id="pinDots">
+        <div class="pin-dot" id="pd0"></div>
+        <div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div>
+        <div class="pin-dot" id="pd3"></div>
+        <div class="pin-dot" id="pd4"></div>
+        <div class="pin-dot" id="pd5"></div>
+      </div>
+      <span class="pin-label">PIN</span>
+    </div>
+    <div class="numpad">
+      <div class="key" ontouchstart="handleKey(event,'1')" onclick="handleKeyClick('1')">1</div>
+      <div class="key" ontouchstart="handleKey(event,'2')" onclick="handleKeyClick('2')">2</div>
+      <div class="key" ontouchstart="handleKey(event,'3')" onclick="handleKeyClick('3')">3</div>
+      <div class="key" ontouchstart="handleKey(event,'4')" onclick="handleKeyClick('4')">4</div>
+      <div class="key" ontouchstart="handleKey(event,'5')" onclick="handleKeyClick('5')">5</div>
+      <div class="key" ontouchstart="handleKey(event,'6')" onclick="handleKeyClick('6')">6</div>
+      <div class="key" ontouchstart="handleKey(event,'7')" onclick="handleKeyClick('7')">7</div>
+      <div class="key" ontouchstart="handleKey(event,'8')" onclick="handleKeyClick('8')">8</div>
+      <div class="key" ontouchstart="handleKey(event,'9')" onclick="handleKeyClick('9')">9</div>
+      <div class="key key-del" ontouchstart="handleKey(event,'del')" onclick="handleKeyClick('del')">⌫</div>
+      <div class="key" ontouchstart="handleKey(event,'0')" onclick="handleKeyClick('0')">0</div>
+      <div class="key key-ok" ontouchstart="handleKey(event,'ok')" onclick="handleKeyClick('ok')">OK</div>
+    </div>
+    <div class="login-back" onclick="showScreen('screenSplash')">← Volver</div>
+    <div class="login-test-hint">Paciente de prueba: <strong>1015</strong></div>
+    <div class="login-hospital-badge">
+      <div class="lhb-icon">🏥</div>
+      <div class="lhb-text">Hospital Universitario San Agustín<br>Avilés · Área Sanitaria III · SESPA</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 4: PROFILE
+═══════════════════════════════════════════ -->
+<div id="screenProfile" class="screen">
+  <div class="profile-header">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+      <button class="back-btn" style="background:rgba(255,255,255,0.15);border:none;border-radius:10px;padding:8px 10px;color:#fff;cursor:pointer;font-size:18px;" onclick="showScreen('screenLogin')">←</button>
+      <div>
+        <h2>Configuración inicial</h2>
+        <p>Tu perfil de paciente</p>
+      </div>
+    </div>
+    <p style="font-size:12px;opacity:0.7;">Estos datos se guardan en tu dispositivo y se configuran con tu enfermera. H.U. San Agustín · Avilés</p>
+  </div>
+  <div class="profile-form">
+    <div class="form-group">
+      <label>Nombre y apellidos</label>
+      <input type="text" id="profName" placeholder="Tu nombre completo" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>Medicamento anticoagulante</label>
+      <div id="medGroup">
+        <!-- Step 1: Brand choice -->
+        <div class="med-brand-row">
+          <div class="med-brand-btn selected" id="brandSintrom" ontouchstart="selectBrand(event,'sintrom')" onclick="selectBrand(null,'sintrom')">
+            <div class="mbb-name">Sintrom®</div>
+            <div class="mbb-sub">Acenocumarol</div>
+          </div>
+          <div class="med-brand-btn" id="brandAldocumar" ontouchstart="selectBrand(event,'aldocumar')" onclick="selectBrand(null,'aldocumar')">
+            <div class="mbb-name">Aldocumar®</div>
+            <div class="mbb-sub">Warfarina</div>
+          </div>
+        </div>
+        <!-- Step 2: Dose options (shown after brand pick) -->
+        <div class="med-dose-options" id="medDoseOptions">
+          <!-- Sintrom options -->
+          <div class="med-dose-group" id="dosesSintrom">
+            <div class="radio-item" ontouchstart="selectMed(event,'sintrom1')" onclick="selectMed(null,'sintrom1')">
+              <input type="radio" name="med" value="sintrom1" id="m1">
+              <div class="ri-text">
+                <span class="ri-name">Sintrom® 1 mg</span>
+                <span class="ri-sub">Comprimido blanco · divisible en 2 mitades</span>
+              </div>
+              <div class="ri-pill-dot" style="background:#E8E8DC;border:2px solid #ccc;width:22px;height:22px;border-radius:50%;flex-shrink:0;"></div>
+            </div>
+            <div class="radio-item" ontouchstart="selectMed(event,'sintrom4')" onclick="selectMed(null,'sintrom4')">
+              <input type="radio" name="med" value="sintrom4" id="m2">
+              <div class="ri-text">
+                <span class="ri-name">Sintrom® 4 mg</span>
+                <span class="ri-sub">Comprimido crema · divisible en 4 cuartos</span>
+              </div>
+              <div class="ri-pill-dot" style="background:#D4C79A;border:2px solid #bbb;width:22px;height:22px;border-radius:50%;flex-shrink:0;"></div>
+            </div>
+          </div>
+          <!-- Aldocumar options -->
+          <div class="med-dose-group" id="dosesAldocumar" style="display:none;">
+            <div class="radio-item" ontouchstart="selectMed(event,'aldocumar1')" onclick="selectMed(null,'aldocumar1')">
+              <input type="radio" name="med" value="aldocumar1" id="m3">
+              <div class="ri-text">
+                <span class="ri-name">Aldocumar® 1 mg</span>
+                <span class="ri-sub">Comprimido azul celeste · divisible en 2</span>
+              </div>
+              <div class="ri-pill-dot" style="background:#87CEEB;border:2px solid #5ab;width:22px;height:22px;border-radius:50%;flex-shrink:0;"></div>
+            </div>
+            <div class="radio-item" ontouchstart="selectMed(event,'aldocumar3')" onclick="selectMed(null,'aldocumar3')">
+              <input type="radio" name="med" value="aldocumar3" id="m4">
+              <div class="ri-text">
+                <span class="ri-name">Aldocumar® 3 mg</span>
+                <span class="ri-sub">Comprimido verde menta · divisible en 2</span>
+              </div>
+              <div class="ri-pill-dot" style="background:#9FD8A4;border:2px solid #6a6;width:22px;height:22px;border-radius:50%;flex-shrink:0;"></div>
+            </div>
+            <div class="radio-item" ontouchstart="selectMed(event,'aldocumar5')" onclick="selectMed(null,'aldocumar5')">
+              <input type="radio" name="med" value="aldocumar5" id="m5">
+              <div class="ri-text">
+                <span class="ri-name">Aldocumar® 5 mg</span>
+                <span class="ri-sub">Comprimido rosa salmón · divisible en 2</span>
+              </div>
+              <div class="ri-pill-dot" style="background:#F4A586;border:2px solid #d87;width:22px;height:22px;border-radius:50%;flex-shrink:0;"></div>
+            </div>
+            <div class="radio-item" ontouchstart="selectMed(event,'aldocumar10')" onclick="selectMed(null,'aldocumar10')">
+              <input type="radio" name="med" value="aldocumar10" id="m6">
+              <div class="ri-text">
+                <span class="ri-name">Aldocumar® 10 mg</span>
+                <span class="ri-sub">Comprimido naranja · divisible en 4</span>
+              </div>
+              <div class="ri-pill-dot" style="background:#F4A94E;border:2px solid #c80;width:22px;height:22px;border-radius:50%;flex-shrink:0;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Rango de INR objetivo</label>
+      <div class="radio-group" id="rangeGroup">
+        <div class="radio-item" ontouchstart="selectRange(event,0)" onclick="selectRange(null,0)">
+          <input type="radio" name="range" value="0" id="r1">
+          <div class="ri-text"><span class="ri-name">2,0 – 3,0</span><span class="ri-sub">Rango estándar (FA, TEP, TVP)</span></div>
+        </div>
+        <div class="radio-item" ontouchstart="selectRange(event,0.5)" onclick="selectRange(null,0.5)">
+          <input type="radio" name="range" value="0.5" id="r2">
+          <div class="ri-text"><span class="ri-name">2,5 – 3,5</span><span class="ri-sub">Válvula mecánica mitral</span></div>
+        </div>
+        <div class="radio-item" ontouchstart="selectRange(event,1.0)" onclick="selectRange(null,1.0)">
+          <input type="radio" name="range" value="1.0" id="r3">
+          <div class="ri-text"><span class="ri-name">3,0 – 4,0</span><span class="ri-sub">Alto riesgo trombótico</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Dosis semanal actual (mg/semana)</label>
+      <input type="number" id="profDoseWeekly" placeholder="Ej: 20" min="0.5" max="100" step="0.5">
+      <span class="form-hint">El médico o enfermera te indicó esta dosis en tu última visita</span>
+    </div>
+    <div class="form-group">
+      <label>🔔 Hora habitual de toma</label>
+      <input type="time" id="profTime" value="21:00">
+      <span class="form-hint">La app te avisará cada día a esta hora. El aviso se repetirá cada 10 min hasta que confirmes la toma.</span>
+    </div>
+    <button id="btnSaveProfile" onclick="saveProfile()">Guardar y empezar →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 5: MAIN
+═══════════════════════════════════════════ -->
+<div id="screenMain" class="screen">
+  <div class="main-header">
+    <div class="greeting">
+      <div class="time-label" id="mainGreetingTime">Buenos días</div>
+      <div class="patient-name" id="mainPatientName">Paciente</div>
+    </div>
+    <div class="header-actions">
+      <button class="header-btn" onclick="showScreen('screenProfile')">⚙️ Perfil</button>
+      <button class="header-btn" onclick="logout()">Salir</button>
+    </div>
+  </div>
+
+  <div class="main-body">
+    <!-- Dose card -->
+    <div class="dose-card">
+      <div class="dose-card-header">
+        <div class="dc-label">Dosis de hoy</div>
+        <div class="dc-title" id="mainDayTitle">—</div>
+      </div>
+      <div class="dose-card-body">
+        <div class="pill-container" id="pillContainer" onclick="confirmDose()" ontouchstart="confirmDose()">
+          <svg id="pillSvg" width="80" height="80" viewBox="0 0 80 80"></svg>
+          <div class="pill-confirm-badge" id="pillBadge">✓</div>
+        </div>
+        <div class="dose-info">
+          <div class="dose-mg" id="mainDoseMg">— <span>mg hoy</span></div>
+          <div class="dose-fraction" id="mainDoseFraction"></div>
+          <div class="dose-weekly" id="mainDoseWeekly"></div>
+          <div class="dose-status pending" id="doseStatus">
+            <span id="doseStatusIcon">⏰</span>
+            <span id="doseStatusText">Pendiente de confirmar</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Week schedule -->
+    <div class="week-card">
+      <div class="week-card-header">
+        <h3>📅 Pauta semanal</h3>
+        <span class="week-total-badge" id="weekTotal">—</span>
+      </div>
+      <div class="week-days" id="weekDays"><!-- Generated --></div>
+      <div class="week-card-foot">Toca la pastilla de hoy para confirmar la toma</div>
+    </div>
+
+    <!-- Info row -->
+    <div class="info-row">
+      <div class="info-card">
+        <div class="ic-label">Próximo control</div>
+        <div class="ic-value" id="nextControlDate">—</div>
+        <div class="ic-sub" id="nextControlDays"></div>
+      </div>
+      <div class="info-card">
+        <div class="ic-label">Último INR</div>
+        <div class="ic-value" id="lastINRValue">—</div>
+        <div class="ic-sub" id="lastINRDate"></div>
+      </div>
+    </div>
+
+    <!-- INR banner -->
+    <div class="inr-banner" id="inrBanner" onclick="showScreen('screenINR')" ontouchstart="goINR(event)" style="touch-action:manipulation;">
+      <div class="ib-icon" id="inrBannerIcon">📋</div>
+      <div class="ib-text">
+        <div class="ib-title" id="inrBannerTitle">Realizar control de INR</div>
+        <div class="ib-sub" id="inrBannerSub">También puedes medir cuando quieras</div>
+      </div>
+      <div class="ib-arrow">›</div>
+    </div>
+
+    <!-- History link -->
+    <button class="btn-secondary" onclick="showScreen('screenHistory')">📊 Ver historial y gráfico de INR →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 6: INR
+═══════════════════════════════════════════ -->
+<div id="screenINR" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screenMain')">←</button>
+    <div>
+      <div class="sh-title">Control de INR</div>
+      <div class="sh-sub" id="inrScreenSub">—</div>
+    </div>
+  </div>
+
+  <div class="inr-body">
+    <!-- Reference table (guide section 5) -->
+    <div class="inr-ref-table" id="inrRefTable">
+      <div class="irt-header" onclick="toggleRefTable()" ontouchstart="toggleRefTable()">
+        <span>📊 Tabla de referencia de valores INR</span>
+        <span id="irtArrow">▼</span>
+      </div>
+      <div class="irt-body" id="irtBody" style="display:none;">
+        <table class="irt-table" id="irtTableData"><!-- filled by JS --></table>
+      </div>
+    </div>
+    <div class="inr-input-card">
+      <label>📋 ¿Cuál es tu valor de INR hoy?</label>
+      <div class="inr-input-row">
+        <input type="number" id="inrInput" placeholder="Ej: 2.4" min="0.5" max="10" step="0.1"
+               inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*">
+        <button class="inr-calc-btn" onclick="calcINR()">Calcular</button>
+      </div>
+      <div class="inr-range-hint" id="inrRangeHint">Rango objetivo: 2,0 – 3,0</div>
+    </div>
+
+    <!-- Result (hidden until calculated) -->
+    <div class="inr-result-card" id="inrResultCard">
+      <div class="irc-status-bar" id="ircStatusBar">
+        <div class="irc-status-label" id="ircStatusLabel">Estado</div>
+        <div class="irc-status-title" id="ircStatusTitle">—</div>
+      </div>
+      <div class="irc-body">
+        <div class="irc-row">
+          <span class="ir-label">INR medido</span>
+          <span class="ir-value" id="ircINR">—</span>
+        </div>
+        <div class="irc-row">
+          <span class="ir-label">Nueva dosis semanal</span>
+          <span class="ir-value" id="ircNewDose">—</span>
+        </div>
+        <div class="irc-row">
+          <span class="ir-label">1.ª toma del día</span>
+          <span class="ir-value" id="ircToday">—</span>
+        </div>
+        <div class="irc-row">
+          <span class="ir-label">Próximo control</span>
+          <span class="ir-value" id="ircNextCtrl">—</span>
+        </div>
+        <div class="irc-instructions" id="ircInstructions"></div>
+        <div class="irc-new-schedule" id="ircNewSchedule" style="display:none;">
+          <div class="ins-label">📅 Nueva pauta semanal</div>
+          <div class="week-days ins-days" id="ircScheduleDays"></div>
+        </div>
+        <div class="irc-critical-alert" id="ircCritAlert" style="display:none;">
+          <div class="ica-icon">🚨</div>
+          <div class="ica-text">Su INR es CRÍTICO. NO tome su medicación hoy y contacte INMEDIATAMENTE con su enfermera o acuda a Urgencias. No espere.</div>
+        </div>
+        <div class="irc-heparin-alert" id="ircHeparinAlert" style="display:none;">
+          <div class="ica-icon">💉</div>
+          <div class="ica-text">Su INR está muy bajo. Contacte con su enfermera para valorar si necesita anticoagulación de refuerzo con heparina (HBPM) hasta que su INR suba a rango.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Observations -->
+    <div class="obs-card">
+      <label>📝 Observaciones</label>
+      <textarea id="obsText" placeholder="Anote aquí cualquier incidencia: cambios en dieta, medicación nueva, síntomas, dudas…"></textarea>
+    </div>
+
+    <!-- Alarm signs (guide section 7) -->
+    <div class="alarm-signs-card" id="alarmSignsCard" style="display:none;">
+      <div class="asc-title">🚨 Llame a su enfermera INMEDIATAMENTE si:</div>
+      <ul class="asc-list">
+        <li>Su INR es <strong>CRÍTICO</strong> (la app le avisa con alerta roja)</li>
+        <li>Sangrado activo: heces negras, vómitos con sangre, corte que no para</li>
+        <li>Hematoma muy grande sin causa aparente</li>
+        <li>Cefalea intensa y repentina o visión doble</li>
+        <li>INR muy bajo y la app indica que puede necesitar heparina</li>
+      </ul>
+      <div class="asc-emergency">Si hay riesgo vital: <strong>llame al 112</strong></div>
+    </div>
+    <!-- Actions -->
+    <div class="action-row">
+      <button class="btn-primary" onclick="sendReport()">📄 Enviar informe a la enfermera</button>
+      <button class="btn-secondary" onclick="showScreen('screenHistory')">📊 Ver historial y gráfico de INR →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 7: HISTORY
+═══════════════════════════════════════════ -->
+<div id="screenHistory" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screenMain')">←</button>
+    <div>
+      <div class="sh-title">Mi seguimiento</div>
+      <div class="sh-sub" id="historyScreenSub">—</div>
+    </div>
+  </div>
+
+  <div class="history-body">
+    <!-- Chart -->
+    <div class="chart-card">
+      <h3>Evolución del INR</h3>
+      <div class="chart-legend">
+        <div class="cl-item"><div class="cl-dot" style="background:var(--green)"></div>En rango</div>
+        <div class="cl-item"><div class="cl-dot" style="background:var(--amber)"></div>Bajo/Alto</div>
+        <div class="cl-item"><div class="cl-dot" style="background:var(--red)"></div>Fuera de rango</div>
+      </div>
+      <canvas id="inrChart" height="160"></canvas>
+    </div>
+
+    <!-- TTR -->
+    <div class="ttr-badge" id="ttrBadge">
+      <div class="ttr-circle green" id="ttrCircle">—</div>
+      <div class="ttr-text">
+        <div class="ttr-label">TTR Rosendal</div>
+        <div class="ttr-desc" id="ttrDesc">—</div>
+      </div>
+    </div>
+
+    <!-- INR History -->
+    <div class="history-list-card">
+      <div class="hlc-header">Historial de controles</div>
+      <div id="historyList">
+        <div class="empty-state">
+          <div class="es-icon">📋</div>
+          <p>No hay controles registrados</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dose log -->
+    <div class="dose-log-card">
+      <div class="hlc-header">Registro de tomas (últimos 14 días)</div>
+      <div id="doseLog">
+        <div class="empty-state">
+          <div class="es-icon">💊</div>
+          <p>No hay registro de tomas</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report -->
+    <button class="btn-primary" onclick="sendReport()">📄 Informe mensual · Enviar a la enfermera</button>
+    <button class="btn-secondary" onclick="showScreen('screenINR')">📋 Realizar nuevo control de INR</button>
+  </div>
+</div>
+
+</div><!-- #app -->
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// STATE & STORAGE
+// ══════════════════════════════════════════════════════════════════
+let currentPin = null;
+let profile = {};
+let inrHistory = [];
+let dosesLog = {};
+let alarmTimers = [];
+let inrChart = null;
+let lastTouchHandled = false;
+
+const MED_INFO = {
+  sintrom1:    { name:'Sintrom® 1 mg',   mg:1,  color:'#E8E8DC', splits:2, unit:0.5  },
+  sintrom4:    { name:'Sintrom® 4 mg',   mg:4,  color:'#D4C79A', splits:4, unit:1.0  },
+  aldocumar1:  { name:'Aldocumar® 1 mg', mg:1,  color:'#87CEEB', splits:2, unit:0.5  },
+  aldocumar3:  { name:'Aldocumar® 3 mg', mg:3,  color:'#9FD8A4', splits:2, unit:1.5  },
+  aldocumar5:  { name:'Aldocumar® 5 mg', mg:5,  color:'#F4A586', splits:2, unit:2.5  },
+  aldocumar10: { name:'Aldocumar® 10 mg',mg:10, color:'#F4A94E', splits:4, unit:2.5  }
+};
+
+const DAY_LABELS = ['L','M','X','J','V','S','D'];
+
+// Convert mg dose to fraction label for a given tablet
+// Returns: '0', '¼', '½', '¾', '1', '1½', '2', etc.
+function doseToFraction(doseMg, medKey) {
+  const med = MED_INFO[medKey];
+  if (!med || doseMg === 0) return '0';
+  const ratio = doseMg / med.mg;          // e.g. 2mg / 4mg = 0.5
+  // Express as fraction of 1 tablet
+  const eighths = Math.round(ratio * 8);  // work in eighths for precision
+  const whole   = Math.floor(eighths / 8);
+  const rem     = eighths % 8;
+  const fracMap = { 0:'', 1:'⅛', 2:'¼', 3:'⅜', 4:'½', 5:'⅝', 6:'¾', 7:'⅞' };
+  const fracStr = fracMap[rem] || '';
+  if (whole === 0) return fracStr || '0';
+  if (fracStr === '') return whole.toString();
+  return whole + fracStr;
+}
+const DAY_NAMES  = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+
+// ── Build/recalculate weekly dose schedule ──
+// Standard patterns: spread dose as evenly as possible across 7 days
+// respecting the minimum unit of the tablet
+// If a previous schedule exists, keep its proportional shape and rescale to new total
+function buildSchedule(doseWeekly, medKey, prevSchedule) {
+  const med = MED_INFO[medKey];
+  if (!med) return Array(7).fill(0);
+  const unit = med.unit;
+
+  // If previous schedule exists and has non-zero days, keep shape and rescale
+  if (prevSchedule && prevSchedule.length === 7) {
+    const prevTotal = prevSchedule.reduce((a, b) => a + b, 0);
+    if (prevTotal > 0) {
+      // Rescale proportionally, then round each to nearest unit
+      const raw = prevSchedule.map(d => d / prevTotal * doseWeekly);
+      const rounded = raw.map(d => Math.round(d / unit) * unit);
+      // Adjust rounding error on the largest-dose day
+      const roundedTotal = rounded.reduce((a, b) => a + b, 0);
+      const diff = Math.round((doseWeekly - roundedTotal) / unit);
+      if (diff !== 0) {
+        const maxIdx = rounded.indexOf(Math.max(...rounded));
+        rounded[maxIdx] = Math.max(0, rounded[maxIdx] + diff * unit);
+      }
+      return rounded;
+    }
+  }
+
+  // No previous schedule: build standard pattern
+  // Try to distribute as evenly as possible, favouring alternating days for small doses
+  const daysWithDose = Math.min(7, Math.round(doseWeekly / unit));
+  const basePerDay = Math.round(doseWeekly / Math.max(daysWithDose, 1) / unit) * unit;
+  let sched = Array(7).fill(0);
+
+  if (doseWeekly <= 0) return sched;
+
+  // Spread across 7 days proportionally
+  const evenDose = Math.floor(doseWeekly / 7 / unit) * unit;
+  const remainder = Math.round((doseWeekly - evenDose * 7) / unit);
+  sched = sched.map(() => evenDose);
+  // Distribute remainder units across first N days
+  for (let i = 0; i < remainder && i < 7; i++) {
+    sched[i] += unit;
+  }
+  return sched;
+}
+
+function ls(key, val) {
+  try {
+    if (val === undefined) return JSON.parse(localStorage.getItem(key));
+    if (val === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, JSON.stringify(val));
+  } catch(e) { return null; }
+}
+
+// ── Express a dose in tablet units (e.g. "1 comprimido", "½ comp.", "1¼ comp.") ──
+function doseToTablets(doseMg, medKey) {
+  const med = MED_INFO[medKey];
+  if (!med || doseMg <= 0) return { text: 'No tomar', sub: '', fraction: 0 };
+  const tablets = doseMg / med.mg;
+  const frac = tablets % 1;
+  const whole = Math.floor(tablets);
+  // Express fraction as vulgar fraction string
+  const fracMap = {
+    0: '',
+    0.5: '½',
+    0.25: '¼',
+    0.75: '¾',
+    0.333: '⅓',
+    0.667: '⅔'
+  };
+  // Find closest fraction key
+  let fracStr = '';
+  let minDiff = 1;
+  for (const [k, v] of Object.entries(fracMap)) {
+    const diff = Math.abs(frac - parseFloat(k));
+    if (diff < minDiff) { minDiff = diff; fracStr = v; }
+  }
+
+  let text = '';
+  if (whole === 0 && fracStr) {
+    text = fracStr + ' comp.';
+  } else if (whole > 0 && fracStr) {
+    text = whole + fracStr + ' comp.';
+  } else {
+    text = whole + ' comp.';
+  }
+
+  const sub = doseMg % 1 === 0 ? doseMg + ' mg' : doseMg.toFixed(1) + ' mg';
+  return { text, sub, fraction: tablets };
+}
+
+function saveData() {
+  if (!currentPin) return;
+  ls('autotao_' + currentPin, { profile, inrHistory, dosesLog });
+}
+
+function loadData(pin) {
+  const d = ls('autotao_' + pin);
+  if (d) {
+    profile     = d.profile     || {};
+    inrHistory  = d.inrHistory  || [];
+    dosesLog    = d.dosesLog    || {};
+    return true;
+  }
+  return false;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SCREEN MANAGEMENT
+// ══════════════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (!el) { console.warn('showScreen: element not found:', id); return; }
+  el.classList.add('active');
+  el.scrollTop = 0;
+  if (id === 'screenMain')    renderMain();
+  if (id === 'screenHistory') renderHistory();
+  if (id === 'screenINR')     renderINRScreen();
+  if (id === 'screenProfile') renderProfileForm();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CONSENT
+// ══════════════════════════════════════════════════════════════════
+let touchToggling = false;
+function toggleCheck(e, id) {
+  if (e && e.type === 'touchstart') {
+    e.preventDefault();
+    touchToggling = true;
+    const cb = document.getElementById(id);
+    cb.checked = !cb.checked;
+    checkConsent();
+    setTimeout(() => { touchToggling = false; }, 400);
+  } else if (!touchToggling) {
+    // click event: only toggle if not already handled by touch
+    const cb = document.getElementById(id);
+    // The click on the item itself (not label/checkbox) needs to toggle
+    if (e && e.target === e.currentTarget) {
+      cb.checked = !cb.checked;
+      checkConsent();
+    }
+  }
+}
+
+function checkConsent() {
+  const allChecked = ['c1','c2','c3','c4'].every(id => document.getElementById(id).checked);
+  document.getElementById('btnConsent').disabled = !allChecked;
+}
+
+function acceptConsent() {
+  ls('autotao_consent', true);
+  requestNotifPermission();
+  showScreen('screenLogin');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SPLASH
+// ══════════════════════════════════════════════════════════════════
+function goINR(e) {
+  if (e && e.type === 'touchstart') {
+    e.preventDefault();
+    showScreen('screenINR');
+  }
+}
+
+let splashTouched = false;
+function splashTap(e) {
+  if (e && e.type === 'touchstart') {
+    e.preventDefault();
+    splashTouched = true;
+    showScreen('screenLogin');
+    setTimeout(() => { splashTouched = false; }, 500);
+  } else if (!splashTouched) {
+    showScreen('screenLogin');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// LOGIN / PIN
+// ══════════════════════════════════════════════════════════════════
+let pinBuffer = '';
+
+function updatePinDisplay() {
+  for (let i = 0; i < 6; i++) {
+    const dot = document.getElementById('pd' + i);
+    if (dot) dot.classList.toggle('filled', i < pinBuffer.length);
+  }
+  const box = document.getElementById('pinDisplayBox');
+  if (box) box.classList.toggle('has-input', pinBuffer.length > 0);
+}
+
+function handleKey(e, k) {
+  if (e && e.type === 'touchstart') {
+    e.preventDefault();
+    lastTouchHandled = true;
+    processKey(k);
+    // Visual feedback - capture target before async, currentTarget is null in setTimeout
+    const target = e.currentTarget;
+    if (target) {
+      target.classList.add('pressed');
+      setTimeout(() => target.classList.remove('pressed'), 150);
+    }
+    setTimeout(() => { lastTouchHandled = false; }, 400);
+  }
+}
+
+function handleKeyClick(k) {
+  if (!lastTouchHandled) processKey(k);
+}
+
+function processKey(k) {
+  if (k === 'del') {
+    pinBuffer = pinBuffer.slice(0, -1);
+  } else if (k === 'ok') {
+    loginWithPin();
+    return;
+  } else if (pinBuffer.length < 6) {
+    pinBuffer += k;
+  }
+  updatePinDisplay();
+}
+
+function loginWithPin() {
+  if (pinBuffer.length < 4) {
+    showToast('Introduce al menos 4 dígitos');
+    return;
+  }
+  currentPin = pinBuffer;
+  const exists = loadData(currentPin);
+  pinBuffer = '';
+  updatePinDisplay();
+  requestNotifPermission();
+  if (!exists || !profile.name) {
+    showWelcome('screenProfile', () => showScreen('screenProfile'));
+  } else {
+    showWelcome('screenMain', () => { showScreen('screenMain'); scheduleAlarms(); });
+  }
+}
+
+function logout() {
+  clearAlarms();
+  currentPin = null;
+  profile = {}; inrHistory = []; dosesLog = {};
+  showScreen('screenLogin');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PROFILE
+// ══════════════════════════════════════════════════════════════════
+function renderProfileForm() {
+  if (!profile.name) return;
+  document.getElementById('profName').value = profile.name || '';
+  document.getElementById('profDoseWeekly').value = profile.doseWeekly || '';
+  document.getElementById('profTime').value = profile.alarmTime || '21:00';
+
+  // Meds: restore brand + dose selection
+  if (profile.med) {
+    const brand = profile.med.startsWith('sintrom') ? 'sintrom' : 'aldocumar';
+    doSelectBrand(brand);
+    const radio = document.querySelector(`input[name=med][value="${profile.med}"]`);
+    if (radio) { radio.checked = true; radio.closest('.radio-item').classList.add('selected'); }
+  } else {
+    doSelectBrand('sintrom'); // default: show Sintrom options
+  }
+  // Range
+  const rangeGroup = document.getElementById('rangeGroup');
+  if (rangeGroup) {
+    rangeGroup.querySelectorAll('.radio-item').forEach(el => el.classList.remove('selected'));
+    if (profile.rangeOffset !== undefined) {
+      const radio = document.querySelector(`input[name=range][value="${profile.rangeOffset}"]`);
+      if (radio) { radio.checked = true; radio.closest('.radio-item').classList.add('selected'); }
+    }
+  }
+}
+
+let touchSelecting = false;
+let currentBrand = 'sintrom'; // tracks which brand tab is active
+
+function selectBrand(e, brand) {
+  if (e && e.type === 'touchstart') {
+    e.preventDefault();
+    touchSelecting = true;
+    doSelectBrand(brand);
+    setTimeout(() => { touchSelecting = false; }, 400);
+  } else if (!touchSelecting) {
+    doSelectBrand(brand);
+  }
+}
+function doSelectBrand(brand) {
+  currentBrand = brand;
+  // Update brand buttons (only if profile screen is in DOM)
+  const bSintrom    = document.getElementById('brandSintrom');
+  const bAldocumar  = document.getElementById('brandAldocumar');
+  const gSintrom    = document.getElementById('dosesSintrom');
+  const gAldocumar  = document.getElementById('dosesAldocumar');
+  if (!bSintrom || !bAldocumar || !gSintrom || !gAldocumar) return;
+  bSintrom.classList.toggle('selected', brand === 'sintrom');
+  bAldocumar.classList.toggle('selected', brand === 'aldocumar');
+  // Show/hide dose groups
+  gSintrom.style.display   = brand === 'sintrom'   ? 'flex' : 'none';
+  gAldocumar.style.display = brand === 'aldocumar' ? 'flex' : 'none';
+  // Deselect current med radio if it belongs to the other brand
+  const radio = document.querySelector('input[name=med]:checked');
+  if (radio) {
+    const isSintrom = radio.value.startsWith('sintrom');
+    if ((brand === 'sintrom' && !isSintrom) || (brand === 'aldocumar' && isSintrom)) {
+      radio.checked = false;
+      document.querySelectorAll('#medGroup .radio-item').forEach(el => el.classList.remove('selected'));
+    }
+  }
+}
+
+function selectMed(e, val) {
+  if (e && e.type === 'touchstart') {
+    e.preventDefault();
+    touchSelecting = true;
+    doSelectMed(val);
+    setTimeout(() => { touchSelecting = false; }, 400);
+  } else if (!touchSelecting) {
+    doSelectMed(val);
+  }
+}
+function doSelectMed(val) {
+  const medGroup = document.getElementById('medGroup');
+  if (!medGroup) return;
+  medGroup.querySelectorAll('.radio-item').forEach(el => el.classList.remove('selected'));
+  const radio = document.querySelector(`input[name=med][value="${val}"]`);
+  if (radio) { radio.checked = true; radio.closest('.radio-item').classList.add('selected'); }
+}
+
+function selectRange(e, val) {
+  if (e && e.type === 'touchstart') {
+    e.preventDefault();
+    touchSelecting = true;
+    doSelectRange(val);
+    setTimeout(() => { touchSelecting = false; }, 400);
+  } else if (!touchSelecting) {
+    doSelectRange(val);
+  }
+}
+function doSelectRange(val) {
+  const rangeGroup = document.getElementById('rangeGroup');
+  if (!rangeGroup) return;
+  rangeGroup.querySelectorAll('.radio-item').forEach(el => el.classList.remove('selected'));
+  const radio = document.querySelector(`input[name=range][value="${val}"]`);
+  if (radio) { radio.checked = true; radio.closest('.radio-item').classList.add('selected'); }
+}
+
+
+function saveProfile() {
+  const name = document.getElementById('profName').value.trim();
+  if (!name) { showToast('Introduce tu nombre'); return; }
+  const medRadio = document.querySelector('input[name=med]:checked');
+  if (!medRadio) { showToast('Selecciona tu medicamento'); return; }
+  const rangeRadio = document.querySelector('input[name=range]:checked');
+  if (!rangeRadio) { showToast('Selecciona tu rango de INR'); return; }
+  const doseWeekly = parseFloat(document.getElementById('profDoseWeekly').value);
+  if (!doseWeekly || doseWeekly <= 0) { showToast('Introduce tu dosis semanal'); return; }
+
+  const medKey = medRadio.value;
+  const schedule = buildSchedule(doseWeekly, medKey, profile.schedule || null);
+
+  profile = {
+    name,
+    med: medKey,
+    rangeOffset: parseFloat(rangeRadio.value),
+    doseWeekly,
+    schedule,
+    alarmTime: document.getElementById('profTime').value || '21:00'
+  };
+  saveData();
+  scheduleAlarms();
+  showScreen('screenMain');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CLINICAL ALGORITHM
+// ══════════════════════════════════════════════════════════════════
+function classifyINR(inr, offset) {
+  const vl = 1.6 + offset;
+  const l  = 1.9 + offset;
+  const h  = 3.1 + offset;
+  const vh = 3.9 + offset;
+  const cr = 5.0 + offset;
+  if (inr >= cr)       return 'critical';
+  if (inr >= vh)       return 'vhigh';
+  if (inr > h)         return 'high';
+  if (inr >= l)        return 'ok';
+  if (inr >= vl)       return 'low';
+  return 'vlow';
+}
+
+const STATUS_INFO = {
+  vlow:     { label:'MUY BAJO',  css:'vlow',   pct:+15, todayInstr:'Normal · Avisar enfermera', days:4, heparin:true  },
+  low:      { label:'BAJO',      css:'low',    pct:+10, todayInstr:'Normal',                    days:4, heparin:false },
+  ok:       { label:'EN RANGO',  css:'ok',     pct:0,   todayInstr:'Normal',                    days:7, heparin:false },
+  high:     { label:'ALTO',      css:'high',   pct:-10, todayInstr:'MITAD de dosis',             days:4, heparin:false },
+  vhigh:    { label:'MUY ALTO',  css:'vhigh',  pct:-15, todayInstr:'NO TOMAR hoy',              days:4, heparin:false },
+  critical: { label:'CRÍTICO',   css:'critical',pct:0,  todayInstr:'NO TOMAR hoy',              days:0, heparin:false }
+};
+
+function calcNewDose(currentDose, pct, med) {
+  const unit = MED_INFO[med]?.unit || 0.5;
+  return Math.round(currentDose * (1 + pct / 100) / unit) * unit;
+}
+
+function getRangeLabel(offset) {
+  const ranges = {0:'2,0 – 3,0', 0.5:'2,5 – 3,5', 1:'3,0 – 4,0'};
+  return ranges[offset] || '2,0 – 3,0';
+}
+
+// Check 3 consecutive in range → 10 days
+function getNextControlDays(status, baseOffset) {
+  if (status !== 'ok') return STATUS_INFO[status].days;
+  const last3 = inrHistory.slice(-3);
+  if (last3.length === 3 && last3.every(r => classifyINR(r.inr, baseOffset) === 'ok')) return 10;
+  return 7;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TTR ROSENDAL
+// ══════════════════════════════════════════════════════════════════
+function calcTTR(history, offset) {
+  if (history.length < 2) return null;
+  const lo = 2.0 + offset - 0.1; // inclusive range with small buffer
+  const hi = 3.0 + offset + 0.1;
+  let inRangeDays = 0, totalDays = 0;
+  const sorted = [...history].sort((a,b) => new Date(a.date) - new Date(b.date));
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const d1 = new Date(sorted[i].date), d2 = new Date(sorted[i+1].date);
+    const days = Math.max(1, Math.round((d2 - d1) / 86400000));
+    const v1 = sorted[i].inr, v2 = sorted[i+1].inr;
+    const loActual = 2.0 + offset, hiActual = 3.0 + offset;
+    // Rosendal: linear interpolation
+    // Find fraction of interval in range
+    let frac = 0;
+    for (let t = 0; t < days; t++) {
+      const v = v1 + (v2 - v1) * (t / days);
+      if (v >= loActual && v <= hiActual + (offset > 0 ? 0 : 0.1)) frac++;
+    }
+    inRangeDays += frac;
+    totalDays += days;
+  }
+  return totalDays > 0 ? Math.round(inRangeDays / totalDays * 100) : null;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PILL SVG RENDERER
+// ══════════════════════════════════════════════════════════════════
+function renderPillSvg(medKey, doseToday) {
+  const med = MED_INFO[medKey];
+  if (!med) return;
+  const svg = document.getElementById('pillSvg');
+  const W = 80, H = 80, R = 36, cx = W/2, cy = H/2;
+  const fraction = doseToday / med.mg;
+  const color = med.color;
+  const gray = '#D0D5DD';
+  const hatch = `hatch_${medKey}`;
+
+  let svgContent = `
+    <defs>
+      <pattern id="${hatch}" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="6" stroke="${gray}" stroke-width="2"/>
+      </pattern>
+      <clipPath id="cpill"><circle cx="${cx}" cy="${cy}" r="${R}"/></clipPath>
+    </defs>`;
+
+  if (doseToday <= 0) {
+    // Zero dose: gray circle with X
+    svgContent += `
+      <circle cx="${cx}" cy="${cy}" r="${R}" fill="${gray}" stroke="#B0B8C4" stroke-width="2"/>
+      <text x="${cx}" y="${cy+6}" text-anchor="middle" font-size="24" fill="#6B7E93">0</text>`;
+  } else if (fraction >= 1) {
+    // Full pill
+    svgContent += `
+      <circle cx="${cx}" cy="${cy}" r="${R}" fill="${color}" stroke="#9BA8B8" stroke-width="2"/>`;
+    // Score lines for divisible pills
+    if (med.splits === 4) {
+      svgContent += `
+        <line x1="${cx-R}" y1="${cy}" x2="${cx+R}" y2="${cy}" stroke="white" stroke-width="5" clip-path="url(#cpill)"/>
+        <line x1="${cx-R}" y1="${cy}" x2="${cx+R}" y2="${cy}" stroke="${adjustColor(color,-30)}" stroke-width="3" clip-path="url(#cpill)"/>
+        <line x1="${cx}" y1="${cy-R}" x2="${cx}" y2="${cy+R}" stroke="white" stroke-width="5" clip-path="url(#cpill)"/>
+        <line x1="${cx}" y1="${cy-R}" x2="${cx}" y2="${cy+R}" stroke="${adjustColor(color,-30)}" stroke-width="3" clip-path="url(#cpill)"/>`;
+    } else if (med.splits === 2) {
+      svgContent += `
+        <line x1="${cx-R}" y1="${cy}" x2="${cx+R}" y2="${cy}" stroke="white" stroke-width="5" clip-path="url(#cpill)"/>
+        <line x1="${cx-R}" y1="${cy}" x2="${cx+R}" y2="${cy}" stroke="${adjustColor(color,-30)}" stroke-width="3" clip-path="url(#cpill)"/>`;
+    }
+  } else {
+    // Partial pill: fraction active (top arc), rest hatched (bottom)
+    const angle = fraction * Math.PI * 2; // radians of active sector
+    // Draw full gray+hatch circle first
+    svgContent += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${hatch})" stroke="#B0B8C4" stroke-width="2"/>`;
+    // Draw active sector
+    if (fraction > 0) {
+      const startAngle = -Math.PI / 2; // start at top
+      const endAngle = startAngle + angle;
+      const x1 = cx + R * Math.cos(startAngle);
+      const y1 = cy + R * Math.sin(startAngle);
+      const x2 = cx + R * Math.cos(endAngle);
+      const y2 = cy + R * Math.sin(endAngle);
+      const largeArc = fraction > 0.5 ? 1 : 0;
+      svgContent += `
+        <path d="M${cx},${cy} L${x1},${y1} A${R},${R} 0 ${largeArc},1 ${x2},${y2} Z"
+              fill="${color}" clip-path="url(#cpill)" stroke="none"/>`;
+    }
+    // Score line(s)
+    svgContent += `<line x1="${cx-R}" y1="${cy}" x2="${cx+R}" y2="${cy}" stroke="white" stroke-width="5" clip-path="url(#cpill)"/>
+      <line x1="${cx-R}" y1="${cy}" x2="${cx+R}" y2="${cy}" stroke="${adjustColor(color,-30)}" stroke-width="3" clip-path="url(#cpill)"/>`;
+    if (med.splits === 4) {
+      svgContent += `<line x1="${cx}" y1="${cy-R}" x2="${cx}" y2="${cy+R}" stroke="white" stroke-width="5" clip-path="url(#cpill)"/>
+        <line x1="${cx}" y1="${cy-R}" x2="${cx}" y2="${cy+R}" stroke="${adjustColor(color,-30)}" stroke-width="3" clip-path="url(#cpill)"/>`;
+    }
+    // Circle border
+    svgContent += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#9BA8B8" stroke-width="2"/>`;
+  }
+
+  // Dose label
+  const doseStr = doseToday % 1 === 0 ? doseToday.toString() : doseToday.toFixed(1);
+  svgContent += `<text x="${cx}" y="${cy+6}" text-anchor="middle" font-family="Nunito,sans-serif" font-size="15" font-weight="800" fill="${fraction > 0.6 ? '#374151' : '#374151'}">${doseStr}</text>`;
+
+  svg.innerHTML = svgContent;
+}
+
+function adjustColor(hex, amount) {
+  // Simple darken
+  const r = Math.max(0, parseInt(hex.slice(1,3),16) + amount);
+  const g = Math.max(0, parseInt(hex.slice(3,5),16) + amount);
+  const b = Math.max(0, parseInt(hex.slice(5,7),16) + amount);
+  return `rgb(${r},${g},${b})`;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// MAIN SCREEN
+// ══════════════════════════════════════════════════════════════════
+function renderMain() {
+  if (!profile.name) return;
+  // Greeting
+  const h = new Date().getHours();
+  const greet = h < 13 ? 'Buenos días' : h < 21 ? 'Buenas tardes' : 'Buenas noches';
+  const elGreeting = document.getElementById('mainGreetingTime');
+  if (!elGreeting) return;
+  elGreeting.textContent = greet;
+  document.getElementById('mainPatientName').textContent = profile.name.split(' ')[0];
+
+  // Today's dose
+  const todayIdx = (new Date().getDay() + 6) % 7; // Mon=0
+  const todayDose = (profile.schedule || [])[todayIdx] || 0;
+  const dayName = DAY_NAMES[todayIdx];
+  document.getElementById('mainDayTitle').textContent = dayName;
+  const med = MED_INFO[profile.med];
+  let fractionLabel = '';
+  if (med && todayDose > 0) {
+    const fracs = todayDose / med.mg;
+    if (fracs >= 1)      fractionLabel = fracs === 1 ? '1 comprimido' : `${fracs} comprimidos`;
+    else if (fracs >= 0.75) fractionLabel = '¾ de comprimido';
+    else if (fracs >= 0.5)  fractionLabel = '½ comprimido';
+    else if (fracs >= 0.25) fractionLabel = '¼ de comprimido';
+    else fractionLabel = `${todayDose} mg`;
+  } else if (todayDose === 0) {
+    fractionLabel = 'No tomar hoy';
+  }
+  document.getElementById('mainDoseMg').innerHTML = `${todayDose} <span>mg hoy</span>`;
+  document.getElementById('mainDoseFraction').textContent = fractionLabel;
+  document.getElementById('mainDoseWeekly').textContent = `Pauta semanal: ${profile.doseWeekly} mg/semana`;
+  renderPillSvg(profile.med, todayDose);
+
+  // Dose status
+  const todayStr = toDateStr(new Date());
+  const doseEntry = dosesLog[todayStr];
+  const doseStatusEl = document.getElementById('doseStatus');
+  const statusText   = document.getElementById('doseStatusText');
+  const statusIcon   = document.getElementById('doseStatusIcon');
+  const badge        = document.getElementById('pillBadge');
+  if (!doseStatusEl || !statusText || !statusIcon || !badge) return;
+
+  if (doseEntry && doseEntry.confirmed) {
+    doseStatusEl.className = 'dose-status ok';
+    statusIcon.textContent = '✓';
+    statusText.textContent = 'Toma confirmada hoy';
+    badge.classList.add('visible');
+  } else if (doseEntry && doseEntry.forgotten) {
+    doseStatusEl.className = 'dose-status missed';
+    statusIcon.textContent = '✗';
+    statusText.textContent = 'Toma no registrada';
+    badge.classList.remove('visible');
+  } else {
+    doseStatusEl.className = 'dose-status pending';
+    statusIcon.textContent = '⏰';
+    statusText.textContent = 'Pendiente de confirmar';
+    badge.classList.remove('visible');
+  }
+
+  // Week days
+  renderWeekDays(todayIdx);
+
+  // Next control & last INR
+  const lastINR = inrHistory.length ? inrHistory[inrHistory.length - 1] : null;
+  if (lastINR) {
+    document.getElementById('lastINRValue').textContent = lastINR.inr.toFixed(1);
+    document.getElementById('lastINRDate').textContent = formatDate(lastINR.date);
+    const nextDate = addDays(new Date(lastINR.date), lastINR.nextControlDays || 7);
+    document.getElementById('nextControlDate').textContent = formatDate(toDateStr(nextDate));
+    const daysLeft = Math.ceil((nextDate - new Date()) / 86400000);
+    document.getElementById('nextControlDays').textContent = daysLeft > 0 ? `en ${daysLeft} días` : daysLeft === 0 ? 'Hoy' : 'Vencido';
+
+    // INR banner
+    const banner = document.getElementById('inrBanner');
+    if (daysLeft <= 0) {
+      banner.className = 'inr-banner due';
+      document.getElementById('inrBannerIcon').textContent = '🔴';
+      document.getElementById('inrBannerTitle').textContent = 'Hoy toca control de INR';
+      document.getElementById('inrBannerSub').textContent = 'Mide tu INR e introduce el resultado';
+    } else {
+      banner.className = 'inr-banner normal';
+      document.getElementById('inrBannerIcon').textContent = '📋';
+      document.getElementById('inrBannerTitle').textContent = 'Realizar control de INR';
+      document.getElementById('inrBannerSub').textContent = 'También puedes medir cuando quieras';
+    }
+  } else {
+    document.getElementById('lastINRValue').textContent = '—';
+    document.getElementById('lastINRDate').textContent = 'Sin datos aún';
+    document.getElementById('nextControlDate').textContent = 'Pendiente';
+    document.getElementById('nextControlDays').textContent = 'Introduce tu primer INR';
+    // Banner: always show "realizar control" when no history
+    const banner0 = document.getElementById('inrBanner');
+    if (banner0) {
+      banner0.className = 'inr-banner due';
+      document.getElementById('inrBannerIcon').textContent = '🔴';
+      document.getElementById('inrBannerTitle').textContent = 'Introduce tu primer INR';
+      document.getElementById('inrBannerSub').textContent = 'Mide tu INR con el coagulómetro e introduce el resultado';
+    }
+  }
+}
+
+function renderWeekDays(todayIdx) {
+  const cont = document.getElementById('weekDays');
+  if (!cont) return;
+  cont.innerHTML = '';
+  const sched = profile.schedule || Array(7).fill(0);
+  const medKey = profile.med;
+  const med = MED_INFO[medKey];
+  const totalWeekly = sched.reduce((a, b) => a + b, 0);
+
+  DAY_LABELS.forEach((label, i) => {
+    const dose = sched[i] || 0;
+    const isToday = i === todayIdx;
+    let cls;
+    if (isToday)         cls = 'today';
+    else if (dose === 0) cls = 'zero';
+    else if (med && dose < med.mg) cls = 'half';
+    else cls = 'normal';
+
+    const fracStr = doseToFraction(dose, medKey);
+    cont.innerHTML += `
+      <div class="week-day">
+        <div class="wd-label">${label}</div>
+        <div class="wd-pill ${cls}" title="${dose} mg">${fracStr}</div>
+      </div>`;
+  });
+
+  // Update total label: show both tablets fraction and mg
+  const totalEl = document.getElementById('weekTotal');
+  if (totalEl) {
+    const t = totalWeekly % 1 === 0 ? totalWeekly.toString() : totalWeekly.toFixed(1);
+    totalEl.textContent = `${t} mg/sem`;
+  }
+}
+
+function confirmDose() {
+  const todayStr = toDateStr(new Date());
+  const alarmTime = profile.alarmTime || '21:00';
+  const [ah, am] = alarmTime.split(':').map(Number);
+  const alarmDate = new Date(); alarmDate.setHours(ah, am, 0, 0);
+  const windowStart = new Date(alarmDate.getTime() - 5 * 60000);
+  const windowEnd   = new Date(alarmDate.getTime() + 6 * 3600000);
+  const now = new Date();
+
+  const todayIdx = (now.getDay() + 6) % 7;
+  const todayDose = (profile.schedule || [])[todayIdx] || 0;
+
+  if (!dosesLog[todayStr] || !dosesLog[todayStr].confirmed) {
+    dosesLog[todayStr] = { confirmed: true, dose: todayDose, time: now.toISOString() };
+    saveData();
+    clearAlarms();
+    showToast('✓ Toma confirmada');
+    renderMain();
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// INR SCREEN
+// ══════════════════════════════════════════════════════════════════
+function renderINRScreen() {
+  if (!profile.name) return;
+  document.getElementById('inrScreenSub').textContent = profile.name;
+  document.getElementById('inrRangeHint').textContent = `Rango objetivo: ${getRangeLabel(profile.rangeOffset || 0)}`;
+  const inrInput = document.getElementById('inrInput');
+  const inrResultCard = document.getElementById('inrResultCard');
+  const obsText = document.getElementById('obsText');
+  if (!inrInput || !inrResultCard || !obsText) return;
+  inrInput.value = '';
+  inrResultCard.classList.remove('visible');
+  obsText.value = '';
+  const sp = document.getElementById('ircNewSchedule');
+  if (sp) sp.style.display = 'none';
+  const ha = document.getElementById('ircHeparinAlert');
+  if (ha) ha.style.display = 'none';
+  const ac = document.getElementById('alarmSignsCard');
+  if (ac) ac.style.display = 'none';
+  // Reset reference table state
+  refTableOpen = false;
+  const irtArrow = document.getElementById('irtArrow');
+  if (irtArrow) irtArrow.textContent = '▼';
+  const irtBody = document.getElementById('irtBody');
+  if (irtBody) irtBody.style.display = 'none';
+  // Build reference table for current range
+  buildRefTable(profile.rangeOffset || 0);
+}
+
+function buildRefTable(offset) {
+  const tbl = document.getElementById('irtTableData');
+  if (!tbl) return;
+  const rows = [
+    { key:'vlow',  label:'MUY BAJO', inr:`< ${(1.6+offset).toFixed(1)}`,          adj:'+15%', hoy:'Normal',        ctrl:'4 días', css:'irt-vlow' },
+    { key:'low',   label:'BAJO',     inr:`${(1.6+offset).toFixed(1)} – ${(1.9+offset).toFixed(1)}`, adj:'+10%', hoy:'Normal',  ctrl:'4 días', css:'irt-low'  },
+    { key:'ok',    label:'EN RANGO', inr:`${(1.9+offset).toFixed(1)} – ${(3.1+offset).toFixed(1)}`, adj:'0%',   hoy:'Normal',  ctrl:'7 días', css:'irt-ok'   },
+    { key:'high',  label:'ALTO',     inr:`${(3.1+offset).toFixed(1)} – ${(3.9+offset).toFixed(1)}`, adj:'-10%', hoy:'½ dosis', ctrl:'4 días', css:'irt-high' },
+    { key:'vhigh', label:'MUY ALTO', inr:`${(3.9+offset).toFixed(1)} – ${(5.0+offset).toFixed(1)}`, adj:'-15%', hoy:'No tomar',ctrl:'4 días', css:'irt-vhigh'},
+    { key:'crit',  label:'CRÍTICO',  inr:`≥ ${(5.0+offset).toFixed(1)}`,           adj:'—',    hoy:'No tomar',      ctrl:'🚨 Llamar', css:'irt-crit' },
+  ];
+  tbl.innerHTML = `
+    <tr>
+      <th>Estado</th><th>INR</th><th>Dosis</th><th>Hoy</th><th>Control</th>
+    </tr>` +
+    rows.map(r => `<tr>
+      <td><span class="irt-badge ${r.css}">${r.label}</span></td>
+      <td>${r.inr}</td>
+      <td style="font-weight:700;color:${r.key==='ok'?'var(--green)':r.key.startsWith('v')||r.key==='crit'?'var(--red)':'var(--amber)'}">${r.adj}</td>
+      <td>${r.hoy}</td>
+      <td>${r.ctrl}</td>
+    </tr>`).join('');
+}
+
+let refTableOpen = false;
+function toggleRefTable() {
+  refTableOpen = !refTableOpen;
+  const body = document.getElementById('irtBody');
+  const arrow = document.getElementById('irtArrow');
+  if (body) body.style.display = refTableOpen ? 'block' : 'none';
+  if (arrow) arrow.textContent = refTableOpen ? '▲' : '▼';
+}
+
+function calcINR() {
+  const raw = document.getElementById('inrInput').value.replace(',','.');
+  const inr = parseFloat(raw);
+  if (isNaN(inr) || inr < 0.5 || inr > 12) {
+    showToast('Introduce un valor válido de INR (0.5 – 12)');
+    return;
+  }
+  const offset = profile.rangeOffset || 0;
+  const status = classifyINR(inr, offset);
+  const info = STATUS_INFO[status];
+  const newDose = status !== 'critical' ? calcNewDose(profile.doseWeekly, info.pct, profile.med) : profile.doseWeekly;
+  const nextDays = getNextControlDays(status, offset);
+  const nextDate = addDays(new Date(), nextDays);
+
+  // Show result card
+  const card = document.getElementById('inrResultCard');
+  if (!card) return;
+  card.classList.add('visible');
+
+  // Status bar
+  const bar = document.getElementById('ircStatusBar');
+  bar.className = `irc-status-bar ${info.css}`;
+  document.getElementById('ircStatusLabel').textContent = 'Estado del INR';
+  document.getElementById('ircStatusTitle').textContent = `${info.label} · INR ${inr.toFixed(1)}`;
+
+  document.getElementById('ircINR').textContent = inr.toFixed(1);
+  const newDoseEl = document.getElementById('ircNewDose');
+  newDoseEl.textContent = `${newDose} mg/semana`;
+  newDoseEl.className = 'ir-value' + (status === 'ok' ? '' : info.pct > 0 ? ' warn' : ' alert');
+
+  document.getElementById('ircToday').textContent = info.todayInstr;
+  document.getElementById('ircNextCtrl').textContent = status === 'critical' ? '🚨 Llamar a su enfermera' : `${formatDate(toDateStr(nextDate))} (en ${nextDays} días)`;
+
+  // Instructions
+  let instrText = '';
+  if (status === 'ok') {
+    instrText = `✅ Su INR está en rango terapéutico (${getRangeLabel(offset)}). Continúe con su pauta habitual de ${newDose} mg/semana. Próximo control en ${nextDays} días.`;
+  } else if (status === 'low') {
+    instrText = `⬇️ Su INR está bajo. Aumente su dosis semanal a ${newDose} mg/semana. Tome su medicación de hoy con normalidad. Repita el control en 4 días.`;
+  } else if (status === 'vlow') {
+    instrText = `⬇️ Su INR está muy bajo. Aumente su dosis semanal a ${newDose} mg/semana. Tome su medicación de hoy con normalidad y avise a su enfermera: puede necesitar heparina de refuerzo (HBPM). Control en 4 días.`;
+  } else if (status === 'high') {
+    instrText = `⬆️ Su INR está alto. Reduzca su dosis semanal a ${newDose} mg/semana. Hoy tome solamente la MITAD de su pastilla habitual. Repita el control en 4 días.`;
+  } else if (status === 'vhigh') {
+    instrText = `⬆️ Su INR está muy alto. Reduzca su dosis a ${newDose} mg/semana. NO tome su pastilla hoy. Evite actividades con riesgo de golpes o cortes. Repita el control en 4 días.`;
+  } else if (status === 'critical') {
+    instrText = `🚨 Su INR es CRÍTICO (≥${(5.0+offset).toFixed(1)}). NO tome su medicación hoy. Contacte INMEDIATAMENTE con su enfermera o acuda a Urgencias. No espere.`;
+  }
+  document.getElementById('ircInstructions').textContent = instrText;
+  document.getElementById('ircCritAlert').style.display    = status === 'critical' ? 'flex' : 'none';
+  document.getElementById('ircHeparinAlert').style.display = status === 'vlow'     ? 'flex' : 'none';
+  // Alarm signs: only show when out of range
+  const alarmCard = document.getElementById('alarmSignsCard');
+  if (alarmCard) alarmCard.style.display = status === 'ok' ? 'none' : 'block';
+
+  // Save to history
+  const record = {
+    date: toDateStr(new Date()),
+    inr,
+    status,
+    prevDose: profile.doseWeekly,
+    newDose,
+    nextControlDays: nextDays,
+    obs: ''
+  };
+  // Update profile dose and recalculate weekly schedule
+  profile.doseWeekly = newDose;
+  profile.schedule = buildSchedule(newDose, profile.med, profile.schedule);
+  inrHistory.push(record);
+  saveData();
+
+  // Show new schedule preview in result card (skip if critical)
+  const schedPreview = document.getElementById('ircNewSchedule');
+  const schedDays = document.getElementById('ircScheduleDays');
+  if (schedPreview && schedDays && status !== 'critical') {
+    schedDays.innerHTML = '';
+    const todayIdx2 = (new Date().getDay() + 6) % 7;
+    const med2 = MED_INFO[profile.med];
+    profile.schedule.forEach((dose, i) => {
+      const isToday = i === todayIdx2;
+      let cls = isToday ? 'today' : (dose === 0 ? 'zero' : (med2 && dose < med2.mg ? 'half' : 'normal'));
+      const fracStr = doseToFraction(dose, profile.med);
+      const lbl = DAY_LABELS[i];
+      schedDays.innerHTML += `<div class="week-day"><div class="wd-label">${lbl}</div><div class="wd-pill ${cls}" title="${dose} mg">${fracStr}</div></div>`;
+    });
+    schedPreview.style.display = 'block';
+  }
+}
+
+function sendReport() {
+  // Attach observations
+  if (inrHistory.length > 0) {
+    inrHistory[inrHistory.length - 1].obs = document.getElementById('obsText')?.value || '';
+    saveData();
+  }
+  generatePDF();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PDF GENERATION
+// ══════════════════════════════════════════════════════════════════
+function generatePDF() {
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit:'mm', format:'a4' });
+    const now = new Date();
+    const pageW = 210, margin = 18;
+    let y = 20;
+
+    // Header
+    doc.setFillColor(26, 79, 138);
+    doc.rect(0, 0, pageW, 32, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold'); doc.setFontSize(16);
+    doc.text('AutoTAO · Informe de Autocontrol TAO', margin, 13);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    doc.text('Unidad de Trombosis, Hemostasia y Anticoagulación · H.U. San Agustín · Avilés · Área Sanitaria III · SESPA', margin, 20);
+    doc.text(`Generado: ${now.toLocaleDateString('es-ES',{day:'2-digit',month:'long',year:'numeric'})} · ${now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}`, margin, 26);
+    y = 42;
+
+    // Patient info
+    doc.setTextColor(26,79,138); doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    doc.text('DATOS DEL PACIENTE', margin, y); y += 6;
+    doc.setDrawColor(26,79,138); doc.setLineWidth(0.5);
+    doc.line(margin, y, pageW - margin, y); y += 5;
+    doc.setTextColor(60,60,60); doc.setFont('helvetica','normal'); doc.setFontSize(10);
+    doc.text(`Nombre: ${profile.name}`, margin, y); y += 5;
+    doc.text(`Medicamento: ${MED_INFO[profile.med]?.name || '—'}`, margin, y);
+    doc.text(`Rango INR objetivo: ${getRangeLabel(profile.rangeOffset || 0)}`, 110, y); y += 5;
+    doc.text(`Dosis semanal actual: ${profile.doseWeekly} mg/semana`, margin, y); y += 10;
+
+    // INR History
+    doc.setTextColor(26,79,138); doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    doc.text('HISTORIAL DE CONTROLES INR', margin, y); y += 6;
+    doc.line(margin, y, pageW - margin, y); y += 5;
+
+    if (inrHistory.length === 0) {
+      doc.setTextColor(100,100,100); doc.setFont('helvetica','italic'); doc.setFontSize(9);
+      doc.text('Sin controles registrados.', margin, y); y += 8;
+    } else {
+      // Table header
+      doc.setFillColor(235, 243, 251);
+      doc.rect(margin, y-4, pageW - margin*2, 7, 'F');
+      doc.setTextColor(26,79,138); doc.setFont('helvetica','bold'); doc.setFontSize(8.5);
+      doc.text('Fecha', margin+2, y); 
+      doc.text('INR', margin+30, y);
+      doc.text('Estado', margin+45, y);
+      doc.text('Dosis nueva', margin+80, y);
+      doc.text('Próx. control', margin+115, y);
+      doc.text('Observaciones', margin+150, y);
+      y += 6;
+
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+      const recent = inrHistory.slice(-20);
+      recent.forEach((r, i) => {
+        if (y > 260) { doc.addPage(); y = 20; }
+        if (i % 2 === 0) { doc.setFillColor(248,250,252); doc.rect(margin, y-4, pageW-margin*2, 6, 'F'); }
+        doc.setTextColor(60,60,60);
+        doc.text(formatDate(r.date), margin+2, y);
+        const statusColors = { ok:[22,163,74], low:[217,119,6], vlow:[220,38,38], high:[234,88,12], vhigh:[220,38,38], critical:[127,29,29] };
+        const sc = statusColors[r.status] || [60,60,60];
+        doc.setTextColor(...sc);
+        doc.text(r.inr.toFixed(1), margin+30, y);
+        doc.text(STATUS_INFO[r.status]?.label || '—', margin+45, y);
+        doc.setTextColor(60,60,60);
+        doc.text(`${r.newDose} mg/sem`, margin+80, y);
+        doc.text(`${r.nextControlDays} días`, margin+115, y);
+        if (r.obs) doc.text(r.obs.slice(0,40), margin+150, y);
+        y += 6;
+      });
+      y += 4;
+    }
+
+    // TTR
+    const ttr = calcTTR(inrHistory, profile.rangeOffset || 0);
+    if (ttr !== null) {
+      y += 2;
+      doc.setTextColor(26,79,138); doc.setFont('helvetica','bold'); doc.setFontSize(10);
+      doc.text(`TTR Rosendal: ${ttr}%`, margin, y);
+      const ttrDesc = ttr >= 70 ? '(Buen control ≥70%)' : ttr >= 50 ? '(Mejorable 50–69%)' : '(Requiere revisión <50%)';
+      doc.setFont('helvetica','normal'); doc.setFontSize(9);
+      doc.text(ttrDesc, margin + 48, y); y += 10;
+    }
+
+    // Doses log
+    doc.setTextColor(26,79,138); doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    doc.text('REGISTRO DE TOMAS (últimos 14 días)', margin, y); y += 6;
+    doc.line(margin, y, pageW-margin, y); y += 5;
+    const today = new Date();
+    doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    let takenCount = 0, totalDays2 = 0;
+    for (let d = 13; d >= 0; d--) {
+      const dt = addDays(today, -d);
+      const ds = toDateStr(dt);
+      const entry = dosesLog[ds];
+      totalDays2++;
+      let status = 'Sin registro'; let color = [150,150,150];
+      if (entry?.confirmed) { status = `✓ Tomada (${entry.dose} mg)`; color = [22,163,74]; takenCount++; }
+      else if (entry?.forgotten) { status = '✗ Olvidada'; color = [220,38,38]; }
+      if (d % 7 === 0 && d > 0) { doc.setTextColor(180,180,180); doc.text('· · ·', margin + 80, y); }
+      doc.setTextColor(...color);
+      doc.text(`${formatDate(ds)}: ${status}`, margin + 2, y);
+      y += 5;
+      if (y > 270) { doc.addPage(); y = 20; }
+    }
+    y += 3;
+    doc.setTextColor(60,60,60);
+    doc.setFontSize(8.5);
+    doc.text(`Adherencia últimos 14 días: ${takenCount}/${totalDays2} tomas confirmadas`, margin, y); y += 10;
+
+    // Footer
+    doc.setFillColor(26,79,138);
+    doc.rect(0, 283, pageW, 14, 'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(7.5); doc.setFont('helvetica','normal');
+    doc.text('AutoTAO es una herramienta de apoyo supervisado. No sustituye la consulta médica ni de enfermería.', margin, 290);
+    doc.text('AutoControlTAO.Area3@sespa.es · H.U. San Agustín · Avilés · Área Sanitaria III · SESPA', margin, 295);
+
+    const blob = doc.output('blob');
+    const url = URL.createObjectURL(blob);
+    const newTab = window.open(url, '_blank');
+    if (!newTab) {
+      const a = document.createElement('a');
+      a.href = url; a.download = `AutoTAO_${profile.name.replace(/\s/g,'_')}_${toDateStr(new Date())}.pdf`;
+      a.click();
+    }
+    showToast('📄 Informe generado');
+  } catch(e) {
+    showToast('Error al generar PDF. Inténtalo de nuevo.');
+    console.error(e);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// HISTORY SCREEN
+// ══════════════════════════════════════════════════════════════════
+function renderHistory() {
+  if (!profile.name) return;
+  document.getElementById('historyScreenSub').textContent = profile.name;
+  renderINRChart();
+  renderTTR();
+  renderHistoryList();
+  renderDoseLog();
+}
+
+function renderINRChart() {
+  const canvas = document.getElementById('inrChart');
+  if (inrChart) { inrChart.destroy(); inrChart = null; }
+  if (inrHistory.length === 0) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    return;
+  }
+  const recent = inrHistory.slice(-20);
+  const offset = profile.rangeOffset || 0;
+  const labels = recent.map(r => formatDateShort(r.date));
+  const values = recent.map(r => r.inr);
+  const colors = recent.map(r => {
+    const s = classifyINR(r.inr, offset);
+    if (s === 'ok') return '#16A34A';
+    if (s === 'low' || s === 'high') return '#D97706';
+    return '#DC2626';
+  });
+
+  inrChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        borderColor: '#2472B8',
+        borderWidth: 2,
+        pointBackgroundColor: colors,
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        tension: 0.3,
+        fill: false
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `INR: ${ctx.parsed.y.toFixed(1)}` } } },
+      scales: {
+        y: {
+          min: 1, max: 6,
+          ticks: { font: { family: 'Nunito', size: 11 } },
+          grid: { color: '#F0F4F8' }
+        },
+        x: { ticks: { font: { family: 'Nunito', size: 10 }, maxRotation: 45 }, grid: { display: false } }
+      },
+      annotation: {}
+    }
+  });
+}
+
+function renderTTR() {
+  const ttr = calcTTR(inrHistory, profile.rangeOffset || 0);
+  const circle = document.getElementById('ttrCircle');
+  const desc = document.getElementById('ttrDesc');
+  if (ttr === null) {
+    circle.textContent = '—'; circle.className = 'ttr-circle green';
+    desc.textContent = 'Se necesitan al menos 2 controles';
+    return;
+  }
+  circle.textContent = `${ttr}%`;
+  if (ttr >= 70) {
+    circle.className = 'ttr-circle green';
+    desc.textContent = 'Buen control del anticoagulante (≥ 70%)';
+  } else if (ttr >= 50) {
+    circle.className = 'ttr-circle amber';
+    desc.textContent = 'Control mejorable (50–69%) — comente con su enfermera';
+  } else {
+    circle.className = 'ttr-circle red';
+    desc.textContent = 'Control insuficiente (< 50%) — consulte con su médico';
+  }
+}
+
+function renderHistoryList() {
+  const cont = document.getElementById('historyList');
+  if (inrHistory.length === 0) {
+    cont.innerHTML = '<div class="empty-state"><div class="es-icon">📋</div><p>No hay controles registrados</p></div>';
+    return;
+  }
+  cont.innerHTML = [...inrHistory].reverse().map(r => `
+    <div class="history-item">
+      <div class="hi-inr ${r.status}">${r.inr.toFixed(1)}</div>
+      <div class="hi-info">
+        <div class="hi-date">${formatDate(r.date)}</div>
+        <div class="hi-dose">Nueva dosis: ${r.newDose} mg/sem · Control en ${r.nextControlDays} días</div>
+        ${r.obs ? `<div class="hi-obs">${r.obs}</div>` : ''}
+      </div>
+      <div class="hi-status ${r.status}">${STATUS_INFO[r.status]?.label || '—'}</div>
+    </div>`).join('');
+}
+
+function renderDoseLog() {
+  const cont = document.getElementById('doseLog');
+  const today = new Date();
+  let html = '';
+  for (let d = 0; d < 14; d++) {
+    const dt = addDays(today, -d);
+    const ds = toDateStr(dt);
+    const entry = dosesLog[ds];
+    const todayIdx2 = (dt.getDay() + 6) % 7;
+    const plannedDose = (profile.schedule || [])[todayIdx2] || 0;
+    let cls = 'norecord', icon = '—', statusTxt = 'Sin registro';
+    if (entry?.confirmed) { cls = 'taken'; icon = '💊'; statusTxt = 'Tomada'; }
+    else if (entry?.forgotten) { cls = 'missed'; icon = '✗'; statusTxt = 'Olvidada'; }
+    html += `
+      <div class="dose-log-item">
+        <div class="dli-icon ${cls}">${icon}</div>
+        <div class="dli-date">${formatDate(ds)}</div>
+        <div class="dli-dose">${plannedDose} mg</div>
+        <div class="dli-status ${cls}">${statusTxt}</div>
+      </div>`;
+  }
+  cont.innerHTML = html || '<div class="empty-state"><div class="es-icon">💊</div><p>No hay registro</p></div>';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ALARMS
+// ══════════════════════════════════════════════════════════════════
+function requestNotifPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function scheduleAlarms() {
+  clearAlarms();
+  if (!profile.alarmTime) return;
+  const [h, m] = profile.alarmTime.split(':').map(Number);
+  const now = new Date();
+  const alarmToday = new Date(); alarmToday.setHours(h, m, 0, 0);
+  let msUntil = alarmToday - now;
+  if (msUntil < -5 * 60000) msUntil += 86400000; // yesterday → tomorrow
+
+  let fireCount = 0;
+  function fireAlarm() {
+    const todayStr = toDateStr(new Date());
+    if (dosesLog[todayStr]?.confirmed) return;
+    showNotifBanner();
+    playBeep();
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('AutoTAO 💊', {
+        body: '¡Hora de tu medicación! Toca la pastilla para confirmar la toma.',
+        requireInteraction: true,
+        tag: 'autotao-dose'
+      });
+    }
+    fireCount++;
+    if (fireCount < 5) {
+      alarmTimers.push(setTimeout(fireAlarm, 10 * 60000));
+    }
+  }
+
+  alarmTimers.push(setTimeout(() => {
+    fireCount = 0;
+    fireAlarm();
+    // Re-schedule for next day
+    alarmTimers.push(setInterval(() => {
+      fireCount = 0; fireAlarm();
+    }, 86400000));
+  }, msUntil));
+}
+
+function clearAlarms() {
+  alarmTimers.forEach(t => { clearTimeout(t); clearInterval(t); });
+  alarmTimers = [];
+}
+
+function showNotifBanner() {
+  document.getElementById('notifBanner').classList.add('visible');
+}
+function closeNotifBanner(e) {
+  if (e) e.preventDefault();
+  document.getElementById('notifBanner').classList.remove('visible');
+}
+
+function playBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [[1000,0],[1000,0.35],[1200,0.7]].forEach(([freq, delay]) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square'; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.15, ctx.currentTime + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.25);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + delay);
+      osc.stop(ctx.currentTime + delay + 0.25);
+    });
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════════════════
+// NURSE CALL
+// ══════════════════════════════════════════════════════════════════
+function callNurse() {
+  const a = document.createElement('a');
+  a.href = 'tel:656205006';
+  a.setAttribute('style', 'display:none');
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => document.body.removeChild(a), 100);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// UTILITIES
+// ══════════════════════════════════════════════════════════════════
+function toDateStr(date) {
+  return date.toISOString().slice(0,10);
+}
+
+function addDays(date, days) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const [y,m,d] = dateStr.split('-');
+  const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
+}
+
+function formatDateShort(dateStr) {
+  if (!dateStr) return '—';
+  const [y,m,d] = dateStr.split('-');
+  return `${parseInt(d)}/${parseInt(m)}`;
+}
+
+function showToast(msg, duration = 2500) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════
+function init() {
+  const consentDone = ls('autotao_consent');
+  if (!consentDone) {
+    showScreen('screenConsent');
+  } else {
+    showScreen('screenSplash');
+  }
+  // Mark forgotten doses at midnight (approximate)
+  checkForgottenDoses();
+  setInterval(checkForgottenDoses, 60000);
+}
+
+function checkForgottenDoses() {
+  if (!currentPin || !profile.alarmTime) return;
+  const [h, m] = profile.alarmTime.split(':').map(Number);
+  const now = new Date();
+  const alarmDate = new Date(); alarmDate.setHours(h, m, 0, 0);
+  const windowEnd = new Date(alarmDate.getTime() + 6 * 3600000);
+  if (now > windowEnd) {
+    const todayStr = toDateStr(now);
+    if (!dosesLog[todayStr]) {
+      dosesLog[todayStr] = { forgotten: true };
+      saveData();
+    }
+  }
+}
+
+// ── Welcome screen ──
+let welcomeTimer = null;
+
+function showWelcome(nextScreen, nextFn) {
+  // Set logo from splash
+  const wLogo = document.getElementById('welcomeLogo');
+  const sLogo = document.querySelector('#screenSplash .splash-logo-img');
+  if (wLogo && sLogo) wLogo.src = sLogo.src;
+
+  showScreen('screenWelcome');
+
+  // Progress bar animation
+  const bar = document.getElementById('welcomeBar');
+  if (bar) {
+    bar.style.width = '0%';
+    setTimeout(() => { bar.style.width = '100%'; }, 50);
+  }
+
+  // Store destination for tap or auto-advance
+  window._welcomeNext = nextScreen;
+  window._welcomeNextFn = nextFn;
+
+  // Auto-advance after 10s
+  if (welcomeTimer) clearTimeout(welcomeTimer);
+  welcomeTimer = setTimeout(() => advanceFromWelcome(), 10000);
+}
+
+function advanceFromWelcome() {
+  if (welcomeTimer) { clearTimeout(welcomeTimer); welcomeTimer = null; }
+  if (window._welcomeNextFn) window._welcomeNextFn();
+  else if (window._welcomeNext) showScreen(window._welcomeNext);
+}
+
+let welcomeTouched = false;
+function welcomeTap(e) {
+  if (e && e.type === 'touchstart') {
+    e.preventDefault();
+    welcomeTouched = true;
+    advanceFromWelcome();
+    setTimeout(() => { welcomeTouched = false; }, 500);
+  } else if (!welcomeTouched) {
+    advanceFromWelcome();
+  }
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
